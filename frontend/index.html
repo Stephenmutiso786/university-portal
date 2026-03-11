@@ -274,6 +274,17 @@
     }
     .admin-card button.alt { background: linear-gradient(120deg, rgba(255,79,216,.25), rgba(60,123,255,.25)); border-color: rgba(255,79,216,.5); }
     .admin-card button.danger { background: linear-gradient(120deg, rgba(255,77,109,.3), rgba(255,176,32,.25)); border-color: rgba(255,77,109,.6); }
+    .finance-guide-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .finance-guide-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(18,24,38,.7);
+    }
+    .finance-guide-card h5 { margin: 0 0 8px; color: var(--neon-cyan); }
+    .finance-guide-card ul,
+    .finance-guide-card ol { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: .92rem; line-height: 1.5; }
+    .finance-guide-card li { margin-bottom: 6px; }
     table { width: 100%; border-collapse: collapse; font-size: .88rem; color: var(--ink); }
     th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px; }
 
@@ -493,6 +504,7 @@
       .admin-body { grid-template-columns: 1fr; }
       .module-toolbar { grid-template-columns: 1fr 1fr; }
       .inst-grid { grid-template-columns: 1fr; }
+      .finance-guide-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 680px) {
       .tiles { grid-template-columns: 1fr; }
@@ -678,6 +690,116 @@
             <article class="chart-card"><h5>Enrollment Trend</h5><canvas id="enrollmentLineChart"></canvas></article>
             <article class="chart-card"><h5>Grade Distribution</h5><canvas id="gradesBarChart"></canvas></article>
           </div>
+        </section>
+
+        <section id="financeGuidePanel" class="module-workspace hidden">
+          <div class="module-head">Fees &amp; Payments Module (Admin)</div>
+          <div class="finance-guide-grid">
+            <article class="finance-guide-card">
+              <h5>Purpose</h5>
+              <ul>
+                <li>Generate accurate invoices per semester/program.</li>
+                <li>Track payments, balances, receipts, and financial clearance.</li>
+                <li>Automate alerts and reports for students and finance officers.</li>
+                <li>Integrate with M-Pesa, bank transfer, and card payments.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Workflow (Professional)</h5>
+              <ol>
+                <li>Admin creates fee structure for program/semester.</li>
+                <li>Portal generates student-specific invoices.</li>
+                <li>Student sees invoice + minimum payment (e.g., 50%).</li>
+                <li>Student pays via gateway (M-Pesa/bank/card).</li>
+                <li>Payment verified by callback.</li>
+                <li>Receipt generated and clearance updated.</li>
+                <li>Student proceeds to semester registration.</li>
+                <li>Finance dashboard updates totals and reports.</li>
+              </ol>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Fee Structure Creation</h5>
+              <ul>
+                <li>Define tuition, lab/hostel, and misc fees.</li>
+                <li>Set minimum required payment (e.g., 50%).</li>
+                <li>Assign to program, semester, and academic year.</li>
+                <li>Example: CS S1 total KES 80,000; minimum KES 40,000.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Invoice Generation</h5>
+              <ul>
+                <li>Auto-generate invoices per student based on structure.</li>
+                <li>Include total fee, minimum required, deadline, instructions.</li>
+                <li>Status: Pending, Partially Paid, Completed.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Payment Processing</h5>
+              <ul>
+                <li>M-Pesa STK push, bank transfer, card, manual payments.</li>
+                <li>STK flow: Pay → Enter PIN → Callback → Receipt.</li>
+                <li>Tables: payments, payment_transactions, receipts.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Automatic Verification</h5>
+              <ul>
+                <li>Validate amount, unique transaction ID, timestamp.</li>
+                <li>Update balance, payment status, financial clearance.</li>
+                <li>Statuses: Pending, Completed, Failed, Partially Paid.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Student View</h5>
+              <ul>
+                <li>Total fees, amount paid, remaining balance.</li>
+                <li>Payment history, receipts, pay outstanding balance.</li>
+                <li>Neon progress bar for payment completion.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Finance Dashboard</h5>
+              <ul>
+                <li>Daily/monthly revenue and outstanding balances.</li>
+                <li>Program-wise revenue, invoices needing action.</li>
+                <li>Export reports to PDF/Excel.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Bulk Operations</h5>
+              <ul>
+                <li>Import fee payments in bulk (CSV/JSON).</li>
+                <li>Mass update balances, generate receipts in bulk.</li>
+                <li>Use select-all with safe confirmation.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Security &amp; Audit</h5>
+              <ul>
+                <li>Encrypted payment data and role-based access.</li>
+                <li>Audit logs for every finance action.</li>
+                <li>Prevents fraud and ensures accountability.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Optional Advanced</h5>
+              <ul>
+                <li>Installments, scholarships, late fees, reminders.</li>
+                <li>Auto-clearance when scholarship covers fees.</li>
+              </ul>
+            </article>
+            <article class="finance-guide-card">
+              <h5>Database Summary</h5>
+              <ul>
+                <li>fee_structures, student_invoices</li>
+                <li>payments, payment_transactions</li>
+                <li>financial_clearance, receipts</li>
+                <li>audit_logs</li>
+              </ul>
+            </article>
+          </div>
+          <div class="seed-note">Key takeaways: fully automated payment flow, student self-service, and finance visibility across the portal.</div>
         </section>
 
         <section id="institutionSettingsPanel" class="module-workspace hidden">
@@ -1237,7 +1359,7 @@
         { key: 'level', label: 'Level', type: 'text', required: true, defaultValue: 'Undergraduate' },
         { key: 'tuitionPerSemester', label: 'Tuition/Semester', type: 'number', required: true, defaultValue: 1200 },
         { key: 'upkeepPerSemester', label: 'Upkeep/Semester', type: 'number', required: true, defaultValue: 450 },
-        { key: 'currency', label: 'Currency', type: 'text', required: true, defaultValue: 'USD' }
+        { key: 'currency', label: 'Currency', type: 'text', required: true, defaultValue: 'KES' }
       ],
       messages: [
         { key: 'title', label: 'Announcement Title', type: 'text', required: true },
@@ -2123,11 +2245,14 @@
         hideModuleForm()
         el('adminChartsPanel').classList.add('hidden')
         el('institutionSettingsPanel').classList.add('hidden')
+        el('financeGuidePanel').classList.add('hidden')
         el('bulkImportPanel').classList.remove('hidden')
         renderBulkModuleOptions()
         return
       }
       el('bulkImportPanel').classList.add('hidden')
+      const showFinanceGuide = role === 'admin' && section === 'finance'
+      el('financeGuidePanel').classList.toggle('hidden', !showFinanceGuide)
       const def = (MODULE_DEFS[role] || {})[section]
       if (!def) {
         el('moduleWorkspace').classList.add('hidden')

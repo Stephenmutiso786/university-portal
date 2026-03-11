@@ -147,8 +147,8 @@ async function main() {
 
   await prisma.feeStructure.upsert({
     where: { id: 1 },
-    update: { level: 'Undergraduate', tuitionPerSemester: 1200, upkeepPerSemester: 450, currency: 'USD' },
-    create: { level: 'Undergraduate', tuitionPerSemester: 1200, upkeepPerSemester: 450, currency: 'USD' }
+    update: { level: 'Undergraduate', tuitionPerSemester: 1200, upkeepPerSemester: 450, currency: 'KES' },
+    create: { level: 'Undergraduate', tuitionPerSemester: 1200, upkeepPerSemester: 450, currency: 'KES' }
   })
 
   await prisma.financeAccount.upsert({

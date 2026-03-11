@@ -232,7 +232,7 @@ model FeeStructure {
   level              String
   tuitionPerSemester Float
   upkeepPerSemester  Float
-  currency           String   @default("USD")
+  currency           String   @default("KES")
   createdAt          DateTime @default(now())
 }
 

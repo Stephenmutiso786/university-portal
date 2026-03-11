@@ -1180,7 +1180,7 @@ function seedData() {
       level: 'Undergraduate',
       tuitionPerSemester: 1200,
       upkeepPerSemester: 450,
-      currency: 'USD'
+      currency: 'KES'
     })
   }
 
@@ -3255,7 +3255,7 @@ app.get('/api/finance/fee-structure', auth, requireAnyPermission(['finance.view'
 })
 
 app.post('/api/finance/fee-structure', auth, requireAnyPermission(['finance.manage', 'academic.manage']), (req, res) => {
-  const { level, tuitionPerSemester, upkeepPerSemester, currency = 'USD' } = req.body
+  const { level, tuitionPerSemester, upkeepPerSemester, currency = 'KES' } = req.body
   if (STORAGE_ENGINE === 'prisma') {
     prisma.feeStructure.create({
       data: {
