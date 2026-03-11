@@ -1090,7 +1090,7 @@
     }
 
     const moduleState = { rows: [], columns: [], section: 'home', filterKey: 'all', query: '', title: 'Module', filterField: 'id', semesterKey: 'all', departmentKey: 'all', autoRefresh: false, autoTimer: null, selectedIds: new Set() }
-    const moduleFormState = { mode: 'create', section: '', row: null, fields: [] }
+    const moduleFormState = { mode: 'create', section: '', row: null, fields: [], readOnly: false }
     const adminCharts = {}
 
     const MODULE_DEFS = {
@@ -1718,23 +1718,28 @@
       moduleFormState.section = ''
       moduleFormState.row = null
       moduleFormState.fields = []
+      moduleFormState.readOnly = false
     }
 
     function renderModuleFormField(field, value) {
       const val = value ?? field.defaultValue ?? ''
+      const disabledAttr = field.readOnly ? 'disabled' : ''
       if (field.type === 'select') {
-        return `<div><label>${field.label}</label><select data-form-key="${field.key}">${(field.options || []).map((opt) => `<option value="${opt}" ${String(opt) === String(val) ? 'selected' : ''}>${opt}</option>`).join('')}</select></div>`
+        return `<div><label>${field.label}</label><select data-form-key="${field.key}" ${disabledAttr}>${(field.options || []).map((opt) => `<option value="${opt}" ${String(opt) === String(val) ? 'selected' : ''}>${opt}</option>`).join('')}</select></div>`
       }
       if (field.type === 'textarea') {
-        return `<div><label>${field.label}</label><textarea data-form-key="${field.key}" rows="3">${val}</textarea></div>`
+        return `<div><label>${field.label}</label><textarea data-form-key="${field.key}" rows="3" ${disabledAttr}>${val}</textarea></div>`
       }
-      return `<div><label>${field.label}</label><input data-form-key="${field.key}" type="${field.type || 'text'}" value="${val}" /></div>`
+      return `<div><label>${field.label}</label><input data-form-key="${field.key}" type="${field.type || 'text'}" value="${val}" ${disabledAttr} /></div>`
     }
 
-    function openModuleForm(mode, section, row = null) {
+    function openModuleForm(mode, section, row = null, readOnly = false) {
       const role = normalizeRole(state.user.role)
       const key = role === 'student' && section === 'courses' ? 'studentCourses' : section
-      const fields = (FORM_DEFS[key] || []).map((f) => ({ ...f }))
+      let fields = (FORM_DEFS[key] || []).map((f) => ({ ...f }))
+      if ((!fields || !fields.length) && row) {
+        fields = moduleState.columns.map((col) => ({ key: col, label: col, type: 'text', readOnly: true }))
+      }
       if (!fields || !fields.length) {
         showToast('No form available for this module.')
         return
@@ -1750,12 +1755,15 @@
           }
         })
       }
+      if (readOnly) fields.forEach((f) => { f.readOnly = true })
       moduleFormState.mode = mode
       moduleFormState.section = section
       moduleFormState.row = row
       moduleFormState.fields = fields
-      el('moduleFormTitle').textContent = `${mode === 'edit' ? 'Edit' : 'Add'} - ${moduleState.title}`
+      moduleFormState.readOnly = readOnly
+      el('moduleFormTitle').textContent = `${readOnly ? 'View' : (mode === 'edit' ? 'Edit' : 'Add')} - ${moduleState.title}`
       el('moduleFormGrid').innerHTML = fields.map((field) => renderModuleFormField(field, row ? row[field.key] : undefined)).join('')
+      el('moduleFormSaveBtn').classList.toggle('hidden', readOnly)
       el('moduleFormPanel').classList.remove('hidden')
     }
 
@@ -1868,7 +1876,7 @@
     async function handleRowAction(action, row) {
       const role = normalizeRole(state.user.role)
       if (action === 'view') {
-        showToast(`Opened details for ${row.name || row.title || row.code || `ID ${row.id}`}.`)
+        openModuleForm('view', moduleState.section, row, true)
         return
       }
       if (role === 'admin' && moduleState.section === 'registrations') {
