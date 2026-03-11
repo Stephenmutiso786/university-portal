@@ -1,0 +1,411 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  LECTURER
+  STAFF
+  ADMIN
+}
+
+enum PaymentMethod {
+  MPESA
+  BANK
+  CARD
+}
+
+enum BalanceTarget {
+  TUITION
+  UPKEEP
+}
+
+enum AdmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ClearanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+}
+
+model User {
+  id               Int       @id @default(autoincrement())
+  email            String    @unique
+  name             String
+  password         String
+  role             Role      @default(STUDENT)
+  twoFactorEnabled Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  lecturedCourses  Course[]  @relation("CourseLecturer")
+  registrations    CourseRegistration[]
+  financeAccount   FinanceAccount?
+  payments         Payment[]
+  submissions      Submission[]
+  attendance       Attendance[] @relation("AttendanceStudent")
+  attendanceMarked Attendance[] @relation("AttendanceMarker")
+  results          Result[]
+
+  messagesFrom     Message[]      @relation("MessageFrom")
+  messagesTo       Message[]      @relation("MessageTo")
+  announcements    Announcement[]
+  notificationsSent Notification[] @relation("NotificationSender")
+  notificationsTo   Notification[] @relation("NotificationRecipient")
+
+  admissionsCreated Admission[] @relation("AdmissionCreatedBy")
+  activityLogs      ActivityLog[]
+
+  hostels         HostelAllocation[]
+  clearance       ClearanceRequest[] @relation("ClearanceStudent")
+  clearanceReviewed ClearanceRequest[] @relation("ClearanceReviewer")
+  passwordResets  PasswordReset[]
+  documents       Document[]
+  alumniProfile   AlumniProfile?
+}
+
+model Department {
+  id        Int       @id @default(autoincrement())
+  name      String
+  code      String    @unique
+  createdAt DateTime  @default(now())
+
+  programs  Program[]
+  courses   Course[]
+}
+
+model Program {
+  id           Int       @id @default(autoincrement())
+  name         String
+  code         String    @unique
+  departmentId Int
+  createdAt    DateTime  @default(now())
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  admissions   Admission[]
+}
+
+model Semester {
+  id           Int       @id @default(autoincrement())
+  name         String
+  code         String    @unique
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime  @default(now())
+
+  courses      Course[]
+  registrations CourseRegistration[]
+  results      Result[]
+}
+
+model Course {
+  id           Int       @id @default(autoincrement())
+  code         String    @unique
+  title        String
+  description  String?
+  credits      Int       @default(3)
+  lecturerId   Int?
+  semesterId   Int?
+  departmentId Int?
+  createdAt    DateTime  @default(now())
+
+  lecturer     User?      @relation("CourseLecturer", fields: [lecturerId], references: [id], onDelete: SetNull)
+  semester     Semester?  @relation(fields: [semesterId], references: [id], onDelete: SetNull)
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  timetable    TimetableSlot[]
+  registrations CourseRegistration[]
+  assignments  Assignment[]
+  materials    Material[]
+  attendance   Attendance[]
+  results      Result[]
+}
+
+model TimetableSlot {
+  id        Int      @id @default(autoincrement())
+  courseId  Int
+  day       String
+  startTime String
+  endTime   String
+  venue     String
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model CourseRegistration {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  courseId   Int
+  semesterId Int
+  status     String   @default("registered")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, semesterId])
+}
+
+model Assignment {
+  id          Int        @id @default(autoincrement())
+  courseId    Int
+  title       String
+  description String?
+  dueDate     DateTime?
+  createdById Int
+  createdAt   DateTime   @default(now())
+
+  course       Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions  Submission[]
+}
+
+model Material {
+  id         Int      @id @default(autoincrement())
+  courseId   Int
+  title      String
+  url        String
+  uploadedBy Int
+  uploadedAt DateTime @default(now())
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id           Int      @id @default(autoincrement())
+  assignmentId Int
+  studentId    Int
+  content      String
+  submittedAt  DateTime @default(now())
+
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  courseId   Int
+  date       DateTime
+  present    Boolean  @default(true)
+  markedById Int
+
+  student    User   @relation("AttendanceStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  markedBy   User   @relation("AttendanceMarker", fields: [markedById], references: [id], onDelete: Cascade)
+}
+
+model Result {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  courseId    Int
+  semesterId  Int
+  score       Float
+  grade       String
+  approved    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semester    Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, semesterId])
+}
+
+model FeeStructure {
+  id                 Int      @id @default(autoincrement())
+  level              String
+  tuitionPerSemester Float
+  upkeepPerSemester  Float
+  currency           String   @default("USD")
+  createdAt          DateTime @default(now())
+}
+
+model FinanceAccount {
+  id             Int      @id @default(autoincrement())
+  studentId      Int      @unique
+  tuitionBalance Float    @default(0)
+  upkeepBalance  Float    @default(0)
+  updatedAt      DateTime @updatedAt
+
+  student        User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id         Int           @id @default(autoincrement())
+  studentId  Int
+  amount     Float
+  method     PaymentMethod
+  target     BalanceTarget @default(TUITION)
+  reference  String        @unique
+  paidAt     DateTime      @default(now())
+
+  student    User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id         Int      @id @default(autoincrement())
+  title      String
+  body       String
+  audience   String   @default("all")
+  authorId   Int
+  createdAt  DateTime @default(now())
+
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  fromUserId Int
+  toUserId   Int
+  body       String
+  createdAt  DateTime @default(now())
+
+  fromUser   User     @relation("MessageFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User     @relation("MessageTo", fields: [toUserId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id         Int                 @id @default(autoincrement())
+  channel    NotificationChannel
+  audience   String              @default("targeted")
+  toUserId   Int?
+  message    String
+  status     String              @default("queued")
+  sentById   Int
+  createdAt  DateTime            @default(now())
+
+  toUser     User?               @relation("NotificationRecipient", fields: [toUserId], references: [id], onDelete: SetNull)
+  sentBy     User                @relation("NotificationSender", fields: [sentById], references: [id], onDelete: Cascade)
+}
+
+model Admission {
+  id           Int             @id @default(autoincrement())
+  name         String
+  email        String
+  programId    Int?
+  status       AdmissionStatus @default(PENDING)
+  createdById  Int?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  program      Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
+  createdBy    User?           @relation("AdmissionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+}
+
+model CalendarEvent {
+  id         Int      @id @default(autoincrement())
+  title      String
+  date       DateTime
+  type       String   @default("academic")
+}
+
+model LmsIntegration {
+  id         Int      @id @default(autoincrement())
+  provider   String
+  enabled    Boolean  @default(true)
+  url        String
+  linkedAt   DateTime @default(now())
+}
+
+model HostelAllocation {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  hostel      String
+  room        String
+  allocatedAt DateTime @default(now())
+
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+}
+
+model LibraryItem {
+  id         Int      @id @default(autoincrement())
+  title      String
+  author     String?
+  available  Boolean  @default(true)
+}
+
+model ClearanceRequest {
+  id          Int              @id @default(autoincrement())
+  studentId   Int
+  reason      String
+  status      ClearanceStatus  @default(PENDING)
+  reviewedById Int?
+  createdAt   DateTime         @default(now())
+  reviewedAt  DateTime?
+
+  student     User             @relation("ClearanceStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  reviewedBy  User?            @relation("ClearanceReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+}
+
+model AlumniProfile {
+  id               Int      @id @default(autoincrement())
+  userId           Int?     @unique
+  name             String
+  email            String   @unique
+  graduationYear   Int
+  employmentStatus String   @default("unknown")
+
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model RegistrationRecord {
+  id         Int      @id @default(autoincrement())
+  regNumber  String   @unique
+  role       String
+  name       String
+  program    String?
+  department String?
+  position   String?
+  email      String?
+  dob        DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  action     String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  name      String
+  mime      String
+  data      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: university-portal
+    env: docker
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    healthCheckPath: /api/health
+    disk:
+      name: portal-data
+      mountPath: /app/backend/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: STORAGE_ENGINE
+        value: json
+      - key: DATA_FILE
+        value: /app/backend/data/store.json
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TRUST_PROXY
+        value: true
+      - key: CORS_ORIGIN
+        value: ALLOW_ALL
+      - key: VERIFICATION_MODE
+        value: mock

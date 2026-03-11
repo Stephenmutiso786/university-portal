@@ -1,0 +1,3131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link id="appFavicon" rel="icon" href="" />
+  <title>Tech Hub Portal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Oxanium:wght@400;600&display=swap');
+    :root {
+      --bg-main: #080a12;
+      --bg-surface: #0f1320;
+      --bg-panel: #121826;
+      --bg-card: #141b2b;
+      --line: rgba(255,255,255,0.08);
+      --ink: #e6ecff;
+      --ink-soft: #a9b4d6;
+      --neon-cyan: #28f3ff;
+      --neon-lime: #a3ff1f;
+      --neon-pink: #ff4fd8;
+      --neon-blue: #3c7bff;
+      --warning: #ffb020;
+      --danger: #ff4d6d;
+      --footer: #0b0f1a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Oxanium", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(40,243,255,.12), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(255,79,216,.12), transparent 55%),
+        linear-gradient(180deg, #070910, #0a0f1b 40%, #0a0f1b);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      opacity: 0.35;
+      z-index: -1;
+    }
+    body[data-role="admin"] .sidebar { background: linear-gradient(180deg, #0f1a2b, #0a0f1a); }
+    body[data-role="admin"] .topbar { background: linear-gradient(90deg, #14203a, #1b2947); color: var(--ink); }
+    body[data-role="lecturer"] .sidebar { background: linear-gradient(180deg, #0a1f24, #08161b); }
+    body[data-role="lecturer"] .topbar { background: linear-gradient(90deg, #0f3a3f, #144a50); color: var(--ink); }
+    body[data-role="student"] .sidebar { background: linear-gradient(180deg, #0d2213, #0a1a11); }
+    body[data-role="student"] .topbar { background: linear-gradient(90deg, #113420, #19482d); color: var(--ink); }
+    body[data-role="staff"] .sidebar { background: linear-gradient(180deg, #1a1f2a, #121621); }
+    body[data-role="staff"] .topbar { background: linear-gradient(90deg, #273046, #2f3a52); color: var(--ink); }
+    .hidden { display: none !important; }
+
+    .login-page { min-height: 100vh; display: grid; grid-template-columns: 34% 66%; }
+    .login-left {
+      background: linear-gradient(160deg, rgba(40,243,255,.18), rgba(255,79,216,.12)), #0b1120;
+      color: var(--ink);
+      padding: 48px;
+      display: grid;
+      align-content: center;
+      gap: 24px;
+      border-right: 1px solid var(--line);
+    }
+    .crest {
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.2);
+      box-shadow: 0 0 20px rgba(40,243,255,.25), inset 0 0 20px rgba(255,79,216,.12);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: .9rem;
+    }
+    .login-left h2 { margin: 0; font-size: 2rem; color: var(--neon-cyan); letter-spacing: .3px; }
+    .login-left p { margin: 0; font-size: 1.05rem; line-height: 1.6; max-width: 520px; color: var(--ink-soft); }
+    .left-bottom { margin-top: 90px; font-size: 1rem; opacity: .9; color: var(--ink-soft); }
+
+    .login-right { display: grid; place-items: center; padding: 20px; }
+    .login-card { width: min(560px, 92%); background: rgba(15,19,32,.75); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: 0 20px 60px rgba(0,0,0,.35); backdrop-filter: blur(10px); }
+    .login-title { text-align: center; font-size: 1.9rem; font-weight: 700; margin-bottom: 12px; color: var(--neon-lime); letter-spacing: .4px; }
+    .login-sub { text-align: center; font-size: 1.05rem; margin-bottom: 26px; color: var(--ink-soft); }
+    .field { margin-bottom: 12px; }
+    .field.password-field { position: relative; }
+    .field.password-field input { padding-right: 100px; }
+    .field.password-field button { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; color: var(--neon-cyan); cursor: pointer; font-size: 0.9rem; }
+    .field.remember { display: flex; align-items: center; font-size: 0.9rem; }
+    .field.remember input { margin-right: 8px; }
+    .field input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 14px;
+      background: rgba(7,9,16,.65);
+      font-size: 1rem;
+      color: var(--ink);
+    }
+    .field input:focus { outline: none; border-color: rgba(40,243,255,.7); box-shadow: 0 0 0 3px rgba(40,243,255,.12); }
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+    .actions .primary {
+      border: 1px solid rgba(40,243,255,.6);
+      background: rgba(40,243,255,.15);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .signin-btn {
+      border: 0;
+      background: linear-gradient(120deg, rgba(40,243,255,.2), rgba(163,255,31,.2));
+      color: var(--ink);
+      border: 1px solid rgba(40,243,255,.5);
+      border-radius: 10px;
+      font-size: 1rem;
+      padding: 10px 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(40,243,255,.2);
+    }
+    .signin-btn:hover { box-shadow: 0 0 26px rgba(40,243,255,.35); }
+    .hint-btn {
+      border: 0;
+      background: transparent;
+      color: var(--neon-blue);
+      cursor: pointer;
+      padding: 0;
+      font-size: .95rem;
+    }
+    .seed-note { margin-top: 18px; font-size: .95rem; color: var(--ink-soft); }
+    .error { margin-top: 10px; color: var(--danger); min-height: 20px; }
+
+    .portal { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
+    .sidebar {
+      background: linear-gradient(180deg, #0e1a2a, #0a0f1a);
+      color: #fff;
+      display: grid;
+      grid-template-rows: 74px 1fr 74px;
+      border-right: 1px solid var(--line);
+    }
+    .brand { padding: 20px; font-size: 1.6rem; letter-spacing: .8px; color: var(--neon-cyan); }
+    .menu { padding: 12px 0; }
+    .menu button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 10px 18px;
+      text-align: left;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .menu button:hover,
+    .menu button.active { background: rgba(40,243,255,.12); color: var(--neon-cyan); }
+    .side-bottom { padding: 14px 18px; font-size: .86rem; color: var(--ink-soft); }
+
+    .main { display: grid; grid-template-rows: 60px 1fr 44px; }
+    .topbar {
+      background: linear-gradient(90deg, #11182a, #192035);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      font-weight: 700;
+      border-bottom: 1px solid var(--line);
+    }
+    .role-pill {
+      background: rgba(40,243,255,.12);
+      border: 1px solid rgba(40,243,255,.5);
+      border-radius: 999px;
+      padding: 6px 10px;
+      text-transform: uppercase;
+      font-size: .8rem;
+      letter-spacing: .3px;
+      color: var(--neon-cyan);
+    }
+    .content { overflow: auto; padding: 12px 14px 16px; }
+
+    .notice {
+      background: rgba(15,19,32,.7);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      text-align: center;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    .notice .d1 { color: var(--warning); font-weight: 700; }
+    .notice .d2 { color: var(--warning); font-size: 1.6rem; font-weight: 800; }
+    .maintenance-banner {
+      background: rgba(255,77,109,.12);
+      border: 1px solid rgba(255,77,109,.6);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+      color: var(--ink);
+      display: none;
+    }
+    .maintenance-banner strong { color: var(--danger); }
+    .maintenance-banner small { color: var(--ink-soft); }
+
+    .section-title {
+      margin: 10px 0 8px;
+      font-weight: 800;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 7px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: var(--neon-lime);
+    }
+
+    .tiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+    .tile {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-left: 4px solid rgba(40,243,255,.7);
+      border-radius: 10px;
+      min-height: 98px;
+      padding: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .tile:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(0,0,0,.35); border-color: rgba(40,243,255,1); }
+    .tile h4 { margin: 0; color: var(--neon-cyan); font-size: .95rem; }
+    .tile .icon { margin-top: 8px; color: var(--neon-lime); font-size: 1.6rem; }
+
+    .admin-workspace {
+      margin-top: 12px;
+      background: rgba(12,16,27,.8);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .admin-head {
+      background: linear-gradient(90deg, #131d32, #1a2743);
+      color: var(--ink);
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+    .admin-body { padding: 10px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
+    .admin-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: rgba(18,24,38,.7); }
+    .admin-card h5 { margin: 0 0 8px; color: var(--neon-cyan); }
+    .admin-card input,
+    .admin-card select,
+    .admin-card textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 7px;
+      font-family: inherit;
+      background: rgba(7,9,16,.6);
+      color: var(--ink);
+    }
+    .admin-card button {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      font-weight: 700;
+      background: linear-gradient(120deg, rgba(40,243,255,.25), rgba(60,123,255,.25));
+      color: var(--ink);
+      border: 1px solid rgba(40,243,255,.5);
+    }
+    .admin-card button.alt { background: linear-gradient(120deg, rgba(255,79,216,.25), rgba(60,123,255,.25)); border-color: rgba(255,79,216,.5); }
+    .admin-card button.danger { background: linear-gradient(120deg, rgba(255,77,109,.3), rgba(255,176,32,.25)); border-color: rgba(255,77,109,.6); }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; color: var(--ink); }
+    th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 6px; }
+
+    .module-workspace {
+      margin-top: 12px;
+      background: rgba(12,16,27,.85);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .module-head { font-weight: 800; margin-bottom: 8px; color: var(--neon-lime); }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 8px; }
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(18,24,38,.7);
+    }
+    .summary-card b { display: block; font-size: 1.1rem; color: var(--neon-cyan); }
+    .module-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 170px 170px 220px auto auto auto auto auto auto;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .module-toolbar input,
+    .module-toolbar select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+      background: rgba(7,9,16,.6);
+      color: var(--ink);
+    }
+    .module-toolbar button {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      background: linear-gradient(120deg, rgba(60,123,255,.25), rgba(40,243,255,.25));
+      color: var(--ink);
+      border: 1px solid rgba(60,123,255,.5);
+    }
+    .module-toolbar button.primary { background: linear-gradient(120deg, rgba(163,255,31,.25), rgba(40,243,255,.2)); border-color: rgba(163,255,31,.6); }
+    .module-toolbar button.danger { background: linear-gradient(120deg, rgba(255,77,109,.3), rgba(255,176,32,.25)); border-color: rgba(255,77,109,.6); }
+    .row-actions button {
+      border: 0;
+      border-radius: 6px;
+      padding: 4px 6px;
+      margin-right: 4px;
+      cursor: pointer;
+      color: var(--ink);
+      background: rgba(60,123,255,.3);
+      border: 1px solid rgba(60,123,255,.5);
+      font-size: .78rem;
+    }
+    .row-actions button.delete { background: rgba(255,77,109,.3); border-color: rgba(255,77,109,.6); }
+    .module-form {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(18,24,38,.7);
+    }
+    .module-form h5 { margin: 0 0 8px; color: var(--neon-cyan); }
+    .module-form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .module-form-grid label {
+      display: block;
+      font-size: .8rem;
+      color: var(--ink-soft);
+      margin-bottom: 3px;
+    }
+    .module-form-grid input,
+    .module-form-grid select,
+    .module-form-grid textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: inherit;
+      margin-bottom: 3px;
+      background: rgba(7,9,16,.6);
+      color: var(--ink);
+    }
+    .module-form-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .module-form-actions button {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      background: rgba(60,123,255,.25);
+      color: var(--ink);
+      border: 1px solid rgba(60,123,255,.5);
+    }
+    .module-form-actions button.primary { background: rgba(163,255,31,.25); border-color: rgba(163,255,31,.6); }
+    .charts-panel {
+      margin-top: 12px;
+      background: rgba(12,16,27,.85);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .chart-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(18,24,38,.7);
+      min-height: 260px;
+    }
+    .chart-card h5 {
+      margin: 0 0 6px;
+      color: var(--neon-cyan);
+      font-size: .9rem;
+    }
+
+    .inst-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .inst-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(18,24,38,.7);
+    }
+    .inst-card h5 { margin: 0 0 8px; color: var(--neon-cyan); }
+    .inst-card label { display: block; font-size: .82rem; margin: 6px 0 3px; color: var(--ink-soft); }
+    .inst-card input, .inst-card textarea, .inst-card select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: inherit;
+      margin-bottom: 5px;
+      background: rgba(7,9,16,.6);
+      color: var(--ink);
+    }
+    .inst-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .inst-actions button {
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      background: rgba(60,123,255,.25);
+      color: var(--ink);
+      border: 1px solid rgba(60,123,255,.5);
+    }
+    .inst-actions button.primary { background: rgba(163,255,31,.25); border-color: rgba(163,255,31,.6); }
+    .inst-preview {
+      border: 1px dashed rgba(40,243,255,.5);
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(18,24,38,.6);
+      margin-top: 10px;
+    }
+    .inst-preview .bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      color: #fff;
+    }
+    .inst-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.6);
+      background: #fff;
+      object-fit: contain;
+    }
+
+    .footer {
+      background: var(--footer);
+      color: var(--ink-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px;
+      font-size: .85rem;
+    }
+    .footer b { color: var(--neon-lime); }
+
+    .toast {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      width: min(460px, 92vw);
+      max-height: 280px;
+      overflow: auto;
+      background: rgba(10,14,24,.95);
+      color: var(--ink);
+      border: 1px solid rgba(40,243,255,.4);
+      border-radius: 7px;
+      padding: 10px;
+      font-size: .82rem;
+      white-space: pre-wrap;
+      display: none;
+      z-index: 50;
+    }
+
+    @media (max-width: 1150px) {
+      .login-page { grid-template-columns: 1fr; }
+      .portal { grid-template-columns: 1fr; }
+      .tiles { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .admin-body { grid-template-columns: 1fr; }
+      .module-toolbar { grid-template-columns: 1fr 1fr; }
+      .inst-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .tiles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section id="loginPage" class="login-page">
+    <div class="login-left">
+      <div class="crest" id="loginCrest">TECH HUB</div>
+      <div>
+        <h2 id="loginInstitutionName">Tech Hub University</h2>
+        <p id="loginInstitutionMotto">Welcome to Tech Hub University. A modern institution advancing knowledge, science, innovation, and digital excellence.</p>
+      </div>
+      <div class="left-bottom" id="leftBottomBrand">TECH HUB © 2026</div>
+    </div>
+
+    <div class="login-right">
+      <div class="login-card">
+        <div id="maintenanceBanner" class="maintenance-banner">
+          <strong>Maintenance Mode</strong>
+          <div id="maintenanceMessage">The portal is currently under maintenance.</div>
+          <small id="maintenanceEta"></small>
+        </div>
+        <div id="loginFormPanel">
+          <div id="loginFormFields">
+            <div class="login-title">SIGN IN | TECH HUB</div>
+            <div class="login-sub">Welcome! Log in to access your dashboard.</div>
+            <div class="field"><input id="loginEmail" placeholder="Phone / Email / Username" value="stephemutiso19@gmail.com" /></div>
+            <div class="field password-field"><input id="loginPassword" type="password" placeholder="PASSWORD" value="2006@shawn_M" /><button id="togglePasswordBtn" class="hint-btn" type="button">Show</button></div>
+            <div class="field remember"><label><input type="checkbox" id="loginRemember" /> Remember me</label></div>
+            <div class="actions">
+              <button id="helpBtn" class="hint-btn">Help / Support</button>
+              <button id="registerBtn" class="hint-btn">Register</button>
+              <button id="forgotBtn" class="hint-btn">Forgot Password?</button>
+              <button class="signin-btn" id="signinBtn">Sign In</button>
+            </div>
+            <div class="seed-note">Seed users: admin / lecturer / student / staff</div>
+            <div class="error" id="loginError"></div>
+          </div>
+
+        <div id="registrationFlow" class="hidden">
+          <div id="registerStep1" class="register-panel">
+            <h4>Verify Registration</h4>
+            <div class="field"><input id="regRegNumber" placeholder="Registration / Staff Number" /></div>
+            <div class="field">
+              <select id="regRole">
+                <option value="student">Student</option>
+                <option value="lecturer">Lecturer</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+            <div class="field"><input id="regDob" type="date" placeholder="Date of Birth (optional)" /></div>
+            <div class="actions">
+              <button id="regVerifyBtn" class="primary">Verify Registration</button>
+              <button id="regClearBtn" class="hint-btn">Clear</button>
+              <button id="regBackBtn" class="hint-btn">Back to Login</button>
+            </div>
+            <div class="error" id="regVerifyError"></div>
+            <div class="actions hidden" id="regVerifyFailActions">
+              <button id="regTryAgainBtn" class="primary">Try Again</button>
+              <button id="regContactBtn" class="hint-btn">Contact Support</button>
+            </div>
+          </div>
+
+          <div id="registerStep2" class="register-panel hidden">
+            <h4>Create Account</h4>
+            <div class="field"><input id="regName" placeholder="Full Name" disabled /></div>
+            <div class="field"><input id="regNumber" placeholder="Registration Number" disabled /></div>
+            <div class="field"><input id="regProgram" placeholder="Program / Department" disabled /></div>
+            <div class="field"><input id="regDepartment" placeholder="Department" disabled /></div>
+            <div class="field"><input id="regEmail" placeholder="Email" /></div>
+            <div class="field"><input id="regPhone" placeholder="Phone (optional)" /></div>
+            <div class="field"><input id="regPassword" type="password" placeholder="Password" /></div>
+            <div class="field"><input id="regPasswordConfirm" type="password" placeholder="Confirm Password" /></div>
+            <div class="actions">
+              <button id="regCreateBtn" class="primary">Create Account</button>
+              <button id="regCancelBtn" class="hint-btn">Cancel</button>
+            </div>
+            <div class="seed-note">Password must be 8+ chars, include a number, uppercase and symbol.</div>
+            <div class="error" id="regCreateError"></div>
+            <div class="actions hidden" id="regDuplicateActions">
+              <button id="regLoginBtn" class="primary">Login</button>
+              <button id="regResetBtn" class="hint-btn">Reset Password</button>
+            </div>
+          </div>
+
+          <div id="registerStep3" class="register-panel hidden">
+            <h4>Verify Account</h4>
+            <p>We sent verification to <span id="verifyEmailDisplay">your email</span>. Use email or OTP to activate your account.</p>
+            <div class="field"><input id="verifyEmailToken" placeholder="Email verification token" /></div>
+            <div class="actions">
+              <button id="verifyEmailBtn" class="primary">Verify Email</button>
+              <button id="resendEmailBtn" class="hint-btn">Resend Email</button>
+            </div>
+            <div class="field"><input id="verifyOtp" placeholder="OTP code" /></div>
+            <div class="actions">
+              <button id="verifyOtpBtn" class="primary">Verify OTP</button>
+              <button id="resendOtpBtn" class="hint-btn">Resend OTP</button>
+            </div>
+            <div class="actions">
+              <button id="regAgainBtn" class="hint-btn">Register Again</button>
+              <button id="regBackToLoginBtn" class="hint-btn">Back to Login</button>
+            </div>
+            <div class="seed-note" id="verifyHint"></div>
+            <div class="error" id="verifyError"></div>
+          </div>
+
+          <div id="registerStep4" class="register-panel hidden">
+            <h4>Registration Successful</h4>
+            <p>Registration successful. Your portal account is now active.</p>
+            <div class="actions">
+              <button id="regGoLoginBtn" class="primary">Go to Login</button>
+              <button id="regAgainBtn2" class="hint-btn">Register Again</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="portalPage" class="portal hidden">
+    <aside class="sidebar">
+      <div class="brand" id="sidebarBrand">TECH HUB</div>
+      <div class="menu" id="menu"></div>
+      <div class="side-bottom"></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div id="portalTitle">Dashboard</div>
+        <div class="role-pill" id="rolePill">ROLE</div>
+      </header>
+
+      <div class="content">
+        <div class="notice">
+          <div class="d1" id="countdownLabel">2nd March 2026 - 23:59</div>
+          <div class="d2" id="countdown">0d 0h 0m 0s</div>
+          <div id="countdownMessage">Please pay required amount before deadline</div>
+        </div>
+
+        <div class="section-title" id="sectionTitle">Modules</div>
+        <div id="tiles" class="tiles"></div>
+
+        <section id="moduleWorkspace" class="module-workspace hidden">
+          <div class="module-head" id="moduleHead">Module</div>
+          <div class="summary-grid" id="summaryGrid"></div>
+          <div class="module-toolbar">
+            <input id="moduleSearch" placeholder="Search..." />
+            <select id="semesterFilter"></select>
+            <select id="departmentFilter"></select>
+            <select id="moduleFilter"></select>
+            <button id="moduleRefreshBtn">Refresh</button>
+            <button id="moduleAddBtn" class="primary">Add</button>
+            <button id="moduleExportPdfBtn">Export PDF</button>
+            <button id="moduleExportExcelBtn">Export Excel</button>
+            <button id="moduleBulkDeleteBtn" class="danger hidden">Delete Selected</button>
+            <button id="moduleAutoRefreshBtn">Auto: Off</button>
+          </div>
+          <div style="overflow:auto;">
+            <table>
+              <thead><tr id="moduleTableHead"></tr></thead>
+              <tbody id="moduleTableBody"></tbody>
+            </table>
+          </div>
+          <section id="moduleFormPanel" class="module-form hidden">
+            <h5 id="moduleFormTitle">Form</h5>
+            <div id="moduleFormGrid" class="module-form-grid"></div>
+            <div class="module-form-actions">
+              <button id="moduleFormSaveBtn" class="primary">Save</button>
+              <button id="moduleFormCancelBtn">Cancel</button>
+            </div>
+          </section>
+        </section>
+
+        <section id="adminChartsPanel" class="charts-panel hidden">
+          <div class="module-head">Admin Visual Analytics</div>
+          <div class="charts-grid">
+            <article class="chart-card"><h5>Students Gender Mix</h5><canvas id="studentsPieChart"></canvas></article>
+            <article class="chart-card"><h5>Fees Paid vs Pending</h5><canvas id="feesPieChart"></canvas></article>
+            <article class="chart-card"><h5>Attendance Status</h5><canvas id="attendancePieChart"></canvas></article>
+            <article class="chart-card"><h5>Students per Department</h5><canvas id="departmentBarChart"></canvas></article>
+            <article class="chart-card"><h5>Enrollment Trend</h5><canvas id="enrollmentLineChart"></canvas></article>
+            <article class="chart-card"><h5>Grade Distribution</h5><canvas id="gradesBarChart"></canvas></article>
+          </div>
+        </section>
+
+        <section id="institutionSettingsPanel" class="module-workspace hidden">
+          <div class="module-head">Institution Settings</div>
+          <div class="inst-grid">
+            <div class="inst-card">
+              <h5>Basic Information</h5>
+              <label>Institution Name</label><input id="instName" />
+              <label>Short Name</label><input id="instShortName" />
+              <label>Motto</label><input id="instMotto" />
+              <label>Year Established</label><input id="instYear" />
+              <label>Registration Number</label><input id="instRegNo" />
+            </div>
+            <div class="inst-card">
+              <h5>Contact Information</h5>
+              <label>Email Address</label><input id="instEmail" />
+              <label>Phone Number</label><input id="instPhone" />
+              <label>Alternative Phone</label><input id="instAltPhone" />
+              <label>Website URL</label><input id="instWebsite" />
+            </div>
+            <div class="inst-card">
+              <h5>Physical Location</h5>
+              <label>Country</label><input id="instCountry" />
+              <label>County / State</label><input id="instCounty" />
+              <label>City / Town</label><input id="instCity" />
+              <label>Physical Address</label><input id="instAddress" />
+              <label>P.O. Box</label><input id="instPoBox" />
+              <label>Postal Code</label><input id="instPostalCode" />
+            </div>
+            <div class="inst-card">
+              <h5>Branding</h5>
+              <label>Main Logo URL or Upload</label><input id="instMainLogo" placeholder="https://..." />
+              <input id="instMainLogoFile" type="file" accept="image/*" />
+              <label>Favicon URL or Upload</label><input id="instFavicon" placeholder="https://..." />
+              <input id="instFaviconFile" type="file" accept="image/*" />
+              <label>Official Seal URL or Upload</label><input id="instSeal" placeholder="https://..." />
+              <input id="instSealFile" type="file" accept="image/*" />
+              <label>Primary Color</label><input id="instPrimaryColor" type="color" value="#1f3554" />
+              <label>Secondary Color</label><input id="instSecondaryColor" type="color" value="#d59835" />
+            </div>
+            <div class="inst-card">
+              <h5>Registration Countdown</h5>
+              <label>Enable Countdown</label>
+              <select id="instRegCountdownEnabled">
+                <option value="true">Enabled</option>
+                <option value="false">Disabled</option>
+              </select>
+              <label>Deadline (Date & Time)</label>
+              <input id="instRegCountdownTarget" type="datetime-local" />
+              <label>Countdown Label</label>
+              <input id="instRegCountdownLabel" placeholder="Registration closes on..." />
+              <label>Countdown Message</label>
+              <input id="instRegCountdownMessage" placeholder="Please complete registration before deadline." />
+            </div>
+            <div class="inst-card">
+              <h5>Maintenance Mode</h5>
+              <label>Maintenance Mode</label>
+              <select id="instMaintenanceMode">
+                <option value="false">Off</option>
+                <option value="true">On</option>
+              </select>
+              <label>Maintenance Message</label>
+              <input id="instMaintenanceMessage" placeholder="Portal under maintenance. Please check later." />
+              <label>Expected End (optional)</label>
+              <input id="instMaintenanceEndsAt" type="datetime-local" />
+            </div>
+            <div class="inst-card">
+              <h5>E-Learning (LMS)</h5>
+              <label>Active Provider</label><input id="lmsProvider" disabled />
+              <label>Moodle URL</label><input id="lmsMoodleUrl" placeholder="https://moodle.example.edu" disabled />
+              <div class="inst-actions">
+                <button id="lmsOpenBtn" class="primary">Open Moodle</button>
+                <button id="lmsRefreshBtn">Refresh LMS</button>
+              </div>
+              <div class="seed-note" id="lmsNote"></div>
+            </div>
+            <div class="inst-card">
+              <h5>Multi-Campus</h5>
+              <label>Campuses JSON (name/address/phone)</label>
+              <textarea id="instCampuses" rows="6">[{"name":"Main Campus","address":"Mombasa","phone":"+254700000000"}]</textarea>
+              <label>Version History</label>
+              <select id="instHistorySelect"><option value="">No history yet</option></select>
+            </div>
+            <div class="inst-card">
+              <h5>Live Preview</h5>
+              <div class="inst-preview">
+                <div id="instPreviewBar" class="bar" style="background:#1f3554;">
+                  <img id="instPreviewLogo" class="inst-logo" alt="Logo preview" />
+                  <div>
+                    <div id="instPreviewName" style="font-weight:800;">Tech Hub University</div>
+                    <div id="instPreviewMotto" style="font-size:.86rem;">Advancing Knowledge...</div>
+                  </div>
+                </div>
+                <div id="instPreviewFooter" style="margin-top:8px; color:#2f4058; font-size:.85rem;"></div>
+              </div>
+              <div class="inst-actions">
+                <button id="instSaveBtn" class="primary">Save Settings</button>
+                <button id="instRestoreHistoryBtn">Restore Version</button>
+                <button id="instRestoreDefaultBtn">Restore Default</button>
+                <button id="instDownloadProfileBtn">Institution Profile PDF</button>
+                <button id="instExportBackupBtn">Export Settings Backup</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="bulkImportPanel" class="module-workspace hidden">
+          <div class="module-head">Bulk Data Management</div>
+          <div class="admin-body" style="grid-template-columns: 1fr 1fr;">
+            <div class="admin-card">
+              <h5>Data Import</h5>
+              <label>Target Module</label>
+              <select id="bulkModuleSelect"></select>
+              <label>Upload CSV or JSON</label>
+              <input id="bulkFileInput" type="file" accept=".csv,application/json,.json,text/csv" />
+              <label>Or Paste Data (CSV/JSON)</label>
+              <textarea id="bulkPasteArea" rows="6" placeholder="Paste CSV or JSON array here..."></textarea>
+              <div class="module-form-actions">
+                <button id="bulkParseBtn" class="primary">Preview</button>
+                <button id="bulkImportBtn">Import Data</button>
+                <button id="bulkClearBtn">Clear</button>
+              </div>
+              <div class="seed-note" id="bulkHelpText">Uploads support CSV or JSON arrays. Ensure headers match the required fields.</div>
+            </div>
+            <div class="admin-card">
+              <h5>Preview</h5>
+              <div id="bulkPreviewInfo" class="seed-note">No file parsed yet.</div>
+              <div style="overflow:auto; max-height: 280px;">
+                <table>
+                  <thead><tr id="bulkPreviewHead"></tr></thead>
+                  <tbody id="bulkPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="adminWorkspace" class="admin-workspace hidden">
+          <div class="admin-head">Admin Super User Workspace</div>
+          <div class="admin-body">
+            <div class="admin-card">
+              <h5>User Management (Student/Lecturer/Staff/Admin)</h5>
+              <input id="newUserName" placeholder="Full name" />
+              <input id="newUserEmail" placeholder="Email" />
+              <input id="newUserPassword" value="pass1234" placeholder="Password" />
+              <select id="newUserRole">
+                <option value="super_admin">super_admin</option>
+                <option value="admin">admin</option>
+                <option value="registrar">registrar</option>
+                <option value="finance_officer">finance_officer</option>
+                <option value="hod">hod</option>
+                <option value="student">student</option>
+                <option value="lecturer">lecturer</option>
+                <option value="non_teaching_staff">non_teaching_staff</option>
+                <option value="alumni">alumni</option>
+              </select>
+              <button id="createUserBtn">Add User</button>
+              <button id="refreshUsersBtn" class="alt">Refresh Users</button>
+
+              <h5 style="margin-top:12px;">Academic Management</h5>
+              <input id="deptName" placeholder="Department Name (e.g. School of Engineering)" />
+              <input id="deptCode" placeholder="Department Code (e.g. ENG)" />
+              <button id="createDeptBtn" class="alt">Create Department</button>
+              <input id="semesterName" placeholder="Semester Name (e.g. Semester 2 2026)" />
+              <input id="semesterCode" placeholder="Semester Code (e.g. 2026-S2)" />
+              <input id="semesterStartDate" type="date" value="2026-08-12" />
+              <input id="semesterEndDate" type="date" value="2026-12-15" />
+              <button id="createSemesterBtn" class="alt">Create Semester</button>
+            </div>
+
+            <div class="admin-card">
+              <h5>Users</h5>
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Role</th><th></th></tr></thead>
+                <tbody id="usersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer">
+        <div><b>Copyright</b> © 2026</div>
+        <div id="footerInstitution">Tech Hub University. <b>All Rights Reserved.</b></div>
+      </footer>
+    </main>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const runningFromFile = window.location.protocol === 'file:'
+    const baseUrl = runningFromFile ? 'http://localhost:4000' : ''
+    const state = { token: null, user: null, section: 'home', institution: null, rbacRoles: null, rbacPermissions: null }
+    const registrationState = { verificationId: null, email: '', emailToken: '', otp: '' }
+    const maintenanceState = { enabled: false, message: '', endsAt: '' }
+    let countdownTimer = null
+
+    const ROLE_LABEL = {
+      admin: 'Admin Dashboard',
+      student: 'Student Dashboard',
+      lecturer: 'Lecturer Dashboard',
+      staff: 'Non-Teaching Staff Dashboard'
+    }
+
+    const MENU_BY_ROLE = {
+      admin: [
+        { id: 'home', label: 'Admin Dashboard' },
+        { id: 'users', label: 'User Management' },
+        { id: 'roles', label: 'Role Management' },
+        { id: 'role-history', label: 'Role Assignment History' },
+        { id: 'profile', label: 'Admin Profile' },
+        { id: 'academics', label: 'Academic Management' },
+        { id: 'faculties', label: 'Faculties' },
+        { id: 'departments', label: 'Departments' },
+        { id: 'programs', label: 'Programs' },
+        { id: 'courses', label: 'Courses' },
+        { id: 'yearsetup', label: 'Academic Year & Semester' },
+        { id: 'enrollment', label: 'Enrollment & Registration' },
+        { id: 'registrations', label: 'Portal Registrations' },
+        { id: 'exam-overview', label: 'Exam Management' },
+        { id: 'exam-sessions', label: 'Exam Sessions' },
+        { id: 'exam-schedules', label: 'Exam Scheduling' },
+        { id: 'exam-papers', label: 'Question Papers' },
+        { id: 'exam-marks', label: 'Marks Entry' },
+        { id: 'exam-moderation', label: 'Moderation' },
+        { id: 'exam-approvals', label: 'Result Approval' },
+        { id: 'exam-transcripts', label: 'Transcripts' },
+        { id: 'finance', label: 'Finance & Fees' },
+        { id: 'reports', label: 'Reports & Analytics' },
+        { id: 'gradeapprovals', label: 'Grade Approvals' },
+        { id: 'messages', label: 'Communication' },
+        { id: 'settings', label: 'System Settings' },
+        { id: 'bulk-tools', label: 'Bulk Data Tools' },
+        { id: 'logout', label: 'Logout' }
+      ],
+      student: [
+        { id: 'home', label: 'Student Dashboard' },
+        { id: 'profile', label: 'Student Profile' },
+        { id: 'courses', label: 'Courses & Lectures' },
+        { id: 'exams', label: 'Assignments & Exams' },
+        { id: 'exam-timetable', label: 'Exam Timetable' },
+        { id: 'exam-results', label: 'Exam Results' },
+        { id: 'exam-transcript', label: 'Transcript' },
+        { id: 'finance', label: 'Financials' },
+        { id: 'common', label: 'Common Modules' },
+        { id: 'extras', label: 'Extra Features' },
+        { id: 'logout', label: 'Logout' }
+      ],
+      lecturer: [
+        { id: 'home', label: 'Lecturer Dashboard' },
+        { id: 'profile', label: 'Lecturer Profile' },
+        { id: 'teaching', label: 'Courses & Classes' },
+        { id: 'assessment', label: 'Assignments & Exams' },
+        { id: 'exam-papers', label: 'Exam Papers' },
+        { id: 'exam-marks', label: 'Exam Marks' },
+        { id: 'reports', label: 'Class Reports' },
+        { id: 'common', label: 'Common Modules' },
+        { id: 'messages', label: 'Communication' },
+        { id: 'logout', label: 'Logout' }
+      ],
+      staff: [
+        { id: 'home', label: 'Staff Dashboard' },
+        { id: 'profile', label: 'Staff Profile' },
+        { id: 'finance', label: 'Finance & Payments' },
+        { id: 'services', label: 'Student Services' },
+        { id: 'reports', label: 'Support & Reports' },
+        { id: 'common', label: 'Common Modules' },
+        { id: 'messages', label: 'Communication' },
+        { id: 'logout', label: 'Logout' }
+      ]
+    }
+
+    const TILES_BY_ROLE = {
+      admin: [
+        { section: 'home', title: 'ADMIN OVERVIEW', icon: '📊', target: 'home', run: () => api('/api/admin/overview') },
+        { section: 'home', title: 'USER MANAGEMENT', icon: '👥', target: 'users', run: () => api('/api/admin/users') },
+        { section: 'home', title: 'ACADEMIC MANAGEMENT', icon: '🏫', target: 'academics', run: () => api('/api/admin/departments') },
+        { section: 'home', title: 'EXAM MANAGEMENT', icon: '🧪', target: 'exam-overview', run: () => api('/api/exams/overview') },
+        { section: 'home', title: 'FINANCE & FEES', icon: '💰', target: 'finance', run: () => api('/api/admin/reports/finance') },
+        { section: 'home', title: 'BULK DATA TOOLS', icon: '📥', target: 'bulk-tools', run: () => Promise.resolve({ ok: true, info: 'Bulk import & mass delete tools ready.' }) },
+        { section: 'profile', title: 'PERSONAL INFO', icon: '🪪', run: () => api('/api/auth/me') },
+        { section: 'profile', title: 'ROLE & PERMISSIONS', icon: '🔐', run: () => Promise.resolve({ role: 'admin', access: 'super user', note: 'Full access to all modules' }) },
+        { section: 'profile', title: 'ACTIVITY LOGS', icon: '📜', run: () => api('/api/security/activity-logs') },
+        { section: 'profile', title: 'PROFILE SUMMARY', icon: '📌', run: () => api('/api/admin/overview') },
+        { section: 'users', title: 'ALL USERS', icon: '🗂️', run: () => api('/api/admin/users') },
+        { section: 'users', title: 'STAFF LIST', icon: '👔', run: () => api('/api/admin/staff') },
+        { section: 'academics', title: 'FACULTIES', icon: '🏛️', target: 'faculties', run: () => api('/api/admin/hierarchy/faculties') },
+        { section: 'academics', title: 'DEPARTMENTS', icon: '🏫', target: 'departments', run: () => api('/api/admin/hierarchy/departments') },
+        { section: 'academics', title: 'PROGRAMS', icon: '🧩', target: 'programs', run: () => api('/api/admin/hierarchy/programs') },
+        { section: 'academics', title: 'COURSE UNITS', icon: '📚', target: 'courses', run: () => api('/api/admin/hierarchy/courses') },
+        { section: 'academics', title: 'ACADEMIC YEAR & SEMESTER', icon: '🗓️', target: 'yearsetup', run: () => api('/api/admin/hierarchy/semesters') },
+        { section: 'enrollment', title: 'ADMISSIONS', icon: '📥', run: () => api('/api/admin/admissions') },
+        { section: 'enrollment', title: 'ENROLLMENT STATS', icon: '📈', run: () => api('/api/admin/reports/enrollment') },
+        { section: 'registrations', title: 'PORTAL REGISTRATIONS', icon: '🧾', run: () => api('/api/admin/registrations') },
+        { section: 'exam-overview', title: 'EXAM SUMMARY', icon: '📌', run: () => api('/api/exams/overview') },
+        { section: 'exam-overview', title: 'EXAM SESSIONS', icon: '🗓️', target: 'exam-sessions', run: () => api('/api/exams/sessions') },
+        { section: 'exam-overview', title: 'EXAM SCHEDULES', icon: '🕒', target: 'exam-schedules', run: () => api('/api/exams/schedules') },
+        { section: 'exam-overview', title: 'QUESTION PAPERS', icon: '📄', target: 'exam-papers', run: () => api('/api/exams/papers') },
+        { section: 'exam-overview', title: 'MARKS ENTRY', icon: '✍️', target: 'exam-marks', run: () => api('/api/exams/marks') },
+        { section: 'exam-overview', title: 'MODERATION', icon: '🧯', target: 'exam-moderation', run: () => api('/api/exams/moderation') },
+        { section: 'exam-overview', title: 'RESULT APPROVAL', icon: '✅', target: 'exam-approvals', run: () => api('/api/exams/approvals') },
+        { section: 'exam-overview', title: 'TRANSCRIPTS', icon: '🧾', target: 'exam-transcripts', run: () => api('/api/exams/transcripts') },
+        { section: 'exam-sessions', title: 'EXAM SESSIONS', icon: '🗓️', run: () => api('/api/exams/sessions') },
+        { section: 'exam-schedules', title: 'EXAM SCHEDULES', icon: '🕒', run: () => api('/api/exams/schedules') },
+        { section: 'exam-papers', title: 'QUESTION PAPERS', icon: '📄', run: () => api('/api/exams/papers') },
+        { section: 'exam-marks', title: 'MARKS ENTRY', icon: '✍️', run: () => api('/api/exams/marks') },
+        { section: 'exam-moderation', title: 'MODERATION QUEUE', icon: '🧯', run: () => api('/api/exams/moderation') },
+        { section: 'exam-approvals', title: 'APPROVAL BOARD', icon: '✅', run: () => api('/api/exams/approvals') },
+        { section: 'exam-transcripts', title: 'TRANSCRIPTS', icon: '🧾', run: () => api('/api/exams/transcripts') },
+        { section: 'finance', title: 'FEE STRUCTURES', icon: '🧾', run: () => api('/api/finance/fee-structure') },
+        { section: 'finance', title: 'PAYMENT SUMMARY', icon: '📉', run: () => api('/api/admin/reports/finance') },
+        { section: 'reports', title: 'GRADE ANALYTICS', icon: '🎯', run: () => api('/api/admin/grades/analytics') },
+        { section: 'reports', title: 'ENROLLMENT REPORTS', icon: '📊', run: () => api('/api/admin/reports/enrollment') },
+        { section: 'gradeapprovals', title: 'PENDING GRADE APPROVALS', icon: '✅', run: () => api('/api/admin/grades/pending') },
+        { section: 'gradeapprovals', title: 'GRADE DASHBOARD', icon: '📈', run: () => api('/api/admin/grades/analytics') },
+        { section: 'messages', title: 'ANNOUNCEMENTS', icon: '📢', run: () => api('/api/communications/announcements') },
+        { section: 'messages', title: 'NOTIFICATIONS', icon: '🔔', run: () => api('/api/communications/notifications') },
+        { section: 'settings', title: 'ACADEMIC CALENDAR', icon: '🗓️', run: () => api('/api/academics/calendar') },
+        { section: 'settings', title: 'LMS INTEGRATIONS', icon: '🧩', run: () => api('/api/lms/integrations') },
+        { section: 'settings', title: 'OPEN MOODLE', icon: '💻', run: () => openLmsLink() },
+        { section: 'settings', title: 'SECURITY MONITORING', icon: '🛡️', run: () => api('/api/security/activity-logs') },
+        { section: 'settings', title: 'ROLE MANAGEMENT', icon: '🧩', target: 'roles', run: () => api('/api/admin/rbac/roles') }
+        ,
+        { section: 'bulk-tools', title: 'DATA IMPORT', icon: '📂', run: () => Promise.resolve({ ok: true, info: 'Upload CSV/JSON files to import data.' }) },
+        { section: 'bulk-tools', title: 'MASS DELETE', icon: '🗑️', run: () => Promise.resolve({ ok: true, info: 'Use select-all and delete selected in any module table.' }) }
+      ],
+      student: [
+        { section: 'home', title: 'PROFILE & INFO', icon: '👤', target: 'profile', run: () => api('/api/auth/me') },
+        { section: 'home', title: 'COURSE STATUS', icon: '📘', target: 'courses', run: () => api('/api/student/dashboard') },
+        { section: 'home', title: 'ATTENDANCE', icon: '🧾', target: 'exams', run: () => api('/api/student/attendance') },
+        { section: 'home', title: 'ANNOUNCEMENTS', icon: '📢', target: 'common', run: () => api('/api/communications/announcements') },
+        { section: 'home', title: 'EXAM TIMETABLE', icon: '🕒', target: 'exam-timetable', run: () => api('/api/exams/schedules') },
+        { section: 'home', title: 'EXAM RESULTS', icon: '🎓', target: 'exam-results', run: () => api('/api/exams/results') },
+        { section: 'profile', title: 'PERSONAL INFO', icon: '🪪', run: () => api('/api/auth/me') },
+        { section: 'profile', title: 'ACADEMIC INFO', icon: '🏫', run: () => api('/api/student/dashboard') },
+        { section: 'profile', title: 'ENROLLMENT & GPA', icon: '📚', run: () => api('/api/student/transcript') },
+        { section: 'profile', title: 'DOCUMENTS', icon: '📂', run: () => Promise.resolve({ info: 'Document upload module placeholder. Can be connected to file storage next.' }) },
+        { section: 'profile', title: 'SETTINGS', icon: '⚙️', run: () => Promise.resolve({ info: 'Profile settings: password/contact update endpoint can be added next.' }) },
+        { section: 'courses', title: 'ENROLLED COURSES', icon: '📚', run: () => api('/api/catalog/courses') },
+        { section: 'courses', title: 'TIMETABLE', icon: '🕒', run: () => api('/api/student/timetable') },
+        { section: 'courses', title: 'MATERIALS/LMS', icon: '💻', run: () => openLmsLink() },
+        { section: 'exams', title: 'ASSIGNMENTS', icon: '📝', run: () => api('/api/student/assignments') },
+        { section: 'exams', title: 'EXAM TIMETABLE', icon: '🕒', target: 'exam-timetable', run: () => api('/api/exams/schedules') },
+        { section: 'exams', title: 'EXAM RESULTS', icon: '🎓', target: 'exam-results', run: () => api('/api/exams/results') },
+        { section: 'exams', title: 'TRANSCRIPT', icon: '📄', target: 'exam-transcript', run: () => api('/api/exams/transcripts') },
+        { section: 'exam-timetable', title: 'EXAM TIMETABLE', icon: '🕒', run: () => api('/api/exams/schedules') },
+        { section: 'exam-results', title: 'EXAM RESULTS', icon: '🎓', run: () => api('/api/exams/results') },
+        { section: 'exam-transcript', title: 'TRANSCRIPT', icon: '📄', run: () => api('/api/exams/transcripts') },
+        { section: 'finance', title: 'FEE BALANCE', icon: '💵', run: () => api('/api/finance/balance') },
+        { section: 'finance', title: 'FEE STATEMENT', icon: '💳', run: () => api('/api/finance/statement') },
+        { section: 'common', title: 'SECURITY & ACTIVITY', icon: '🛡️', run: () => Promise.resolve({ info: 'Security logs are restricted by role. Contact admin for audit trails.' }) },
+        { section: 'common', title: 'FEEDBACK / SURVEYS', icon: '🗳️', run: () => Promise.resolve({ info: 'Feedback module placeholder. Can connect to forms/survey backend.' }) },
+        { section: 'common', title: 'ALUMNI / CAREER', icon: '💼', run: () => api('/api/extras/alumni') },
+        { section: 'common', title: 'TIMETABLE / CALENDAR', icon: '🗓️', run: () => api('/api/academics/calendar') },
+        { section: 'extras', title: 'LIBRARY', icon: '📙', run: () => api('/api/extras/library') },
+        { section: 'extras', title: 'ONLINE CLEARANCE', icon: '✅', run: () => api('/api/extras/clearance') }
+      ],
+      lecturer: [
+        { section: 'home', title: 'PROFILE', icon: '👨‍🏫', target: 'profile', run: () => api('/api/auth/me') },
+        { section: 'home', title: 'COURSES TAUGHT', icon: '📚', target: 'teaching', run: () => api('/api/lecturer/dashboard') },
+        { section: 'home', title: 'ANNOUNCEMENTS', icon: '📣', target: 'messages', run: () => api('/api/communications/announcements') },
+        { section: 'home', title: 'EXAM MARKS', icon: '✅', target: 'exam-marks', run: () => api('/api/exams/marks') },
+        { section: 'profile', title: 'PERSONAL INFO', icon: '🪪', run: () => api('/api/auth/me') },
+        { section: 'profile', title: 'PROFESSIONAL INFO', icon: '🎓', run: () => Promise.resolve({ info: 'Professional profile module. Add qualification fields in DB for full support.' }) },
+        { section: 'profile', title: 'COURSES TAUGHT', icon: '📚', run: () => api('/api/lecturer/dashboard') },
+        { section: 'profile', title: 'STUDENT INTERACTION', icon: '🤝', run: () => withLecturerCourse((courseId) => api(`/api/lecturer/class-list/${courseId}`)) },
+        { section: 'profile', title: 'SETTINGS', icon: '⚙️', run: () => Promise.resolve({ info: 'Password/contact update endpoint can be added next.' }) },
+        { section: 'teaching', title: 'UPLOAD MATERIAL', icon: '📤', run: () => withLecturerCourse((courseId) => api('/api/lecturer/materials', { method: 'POST', body: JSON.stringify({ courseId, title: 'Extra Notes', url: 'https://example.com/notes.pdf' }) })) },
+        { section: 'teaching', title: 'CLASS LIST', icon: '👨‍🎓', run: () => withLecturerCourse((courseId) => api(`/api/lecturer/class-list/${courseId}`)) },
+        { section: 'teaching', title: 'OPEN MOODLE', icon: '💻', run: () => openLmsLink() },
+        { section: 'assessment', title: 'CREATE ASSIGNMENT', icon: '📝', run: () => withLecturerCourse((courseId) => api('/api/lecturer/assignments', { method: 'POST', body: JSON.stringify({ courseId, title: 'Quiz Task', description: 'Solve task', dueDate: '2026-11-01' }) })) },
+        { section: 'assessment', title: 'MARK ATTENDANCE', icon: '🧷', run: () => withLecturerCourseAndStudent((courseId, studentId) => api('/api/lecturer/attendance', { method: 'POST', body: JSON.stringify({ studentId, courseId, present: true }) })) },
+        { section: 'assessment', title: 'GRADE ENTRY SHEET', icon: '📋', run: () => withLecturerCourse((courseId) => api(`/api/lecturer/grade-entry/${courseId}`)) },
+        { section: 'assessment', title: 'SAVE GRADE DRAFT', icon: '💾', run: () => withLecturerCourseAndStudent((courseId, studentId) => api(`/api/lecturer/grade-entry/${courseId}/save-draft`, { method: 'POST', body: JSON.stringify({ rows: [{ studentId, catMarks: 24, assignmentMarks: 4, examMarks: 70 }] }) })) },
+        { section: 'assessment', title: 'SUBMIT FOR APPROVAL', icon: '📤', run: () => withLecturerCourse((courseId) => api(`/api/lecturer/grade-entry/${courseId}/submit`, { method: 'POST', body: JSON.stringify({}) })) },
+        { section: 'assessment', title: 'ENTER MARKS (LEGACY)', icon: '🏅', run: () => withLecturerCourseAndStudent((courseId, studentId) => api('/api/lecturer/marks', { method: 'POST', body: JSON.stringify({ studentId, courseId, score: 84 }) })) },
+        { section: 'exam-papers', title: 'QUESTION PAPERS', icon: '📄', run: () => api('/api/exams/papers') },
+        { section: 'exam-marks', title: 'EXAM MARKS', icon: '✅', run: () => api('/api/exams/marks') },
+        { section: 'reports', title: 'CLASS ANALYTICS', icon: '📈', run: () => api('/api/communications/notifications') },
+        { section: 'common', title: 'SECURITY & ACTIVITY', icon: '🛡️', run: () => Promise.resolve({ info: 'Security logs are restricted by role. Contact admin for audit trails.' }) },
+        { section: 'common', title: 'FEEDBACK / SURVEYS', icon: '🗳️', run: () => Promise.resolve({ info: 'Feedback module placeholder. Can connect to forms/survey backend.' }) },
+        { section: 'common', title: 'ALUMNI / CAREER', icon: '💼', run: () => api('/api/extras/alumni') },
+        { section: 'common', title: 'TIMETABLE / CALENDAR', icon: '🗓️', run: () => api('/api/academics/calendar') },
+        { section: 'messages', title: 'MESSAGES', icon: '💬', run: () => api('/api/communications/messages') },
+        { section: 'messages', title: 'NOTIFICATIONS', icon: '🔔', run: () => api('/api/communications/notifications') }
+      ],
+      staff: [
+        { section: 'home', title: 'STAFF OVERVIEW', icon: '🏢', target: 'reports', run: () => api('/api/communications/announcements') },
+        { section: 'home', title: 'WORK PROFILE', icon: '👤', target: 'profile', run: () => api('/api/auth/me') },
+        { section: 'profile', title: 'PERSONAL INFO', icon: '🪪', run: () => api('/api/auth/me') },
+        { section: 'profile', title: 'DEPARTMENT INFO', icon: '🏬', run: () => Promise.resolve({ info: 'Department section info can be mapped from HR/staff records.' }) },
+        { section: 'profile', title: 'TASK LOGS', icon: '📋', run: () => api('/api/extras/clearance') },
+        { section: 'profile', title: 'SETTINGS', icon: '⚙️', run: () => Promise.resolve({ info: 'Password/contact update endpoint can be added next.' }) },
+        { section: 'finance', title: 'FEE STRUCTURES', icon: '🧾', run: () => api('/api/finance/fee-structure') },
+        { section: 'finance', title: 'FINANCE REPORT', icon: '💹', run: () => api('/api/finance/fee-structure') },
+        { section: 'services', title: 'ADMISSIONS', icon: '📥', run: () => api('/api/extras/clearance') },
+        { section: 'services', title: 'HOSTEL ALLOCATION', icon: '🏠', run: () => api('/api/extras/hostels') },
+        { section: 'services', title: 'LIBRARY SERVICES', icon: '📚', run: () => api('/api/extras/library') },
+        { section: 'reports', title: 'ENROLLMENT REPORT', icon: '📈', run: () => api('/api/communications/notifications') },
+        { section: 'reports', title: 'CLEARANCE REQUESTS', icon: '📋', run: () => api('/api/extras/clearance') },
+        { section: 'common', title: 'SECURITY & ACTIVITY', icon: '🛡️', run: () => Promise.resolve({ info: 'Security logs are restricted by role. Contact admin for audit trails.' }) },
+        { section: 'common', title: 'FEEDBACK / SURVEYS', icon: '🗳️', run: () => Promise.resolve({ info: 'Feedback module placeholder. Can connect to forms/survey backend.' }) },
+        { section: 'common', title: 'ALUMNI / CAREER', icon: '💼', run: () => api('/api/extras/alumni') },
+        { section: 'common', title: 'TIMETABLE / CALENDAR', icon: '🗓️', run: () => api('/api/academics/calendar') },
+        { section: 'messages', title: 'ANNOUNCEMENTS', icon: '📢', run: () => api('/api/communications/announcements') },
+        { section: 'messages', title: 'NOTIFICATIONS', icon: '🔔', run: () => api('/api/communications/notifications') }
+      ]
+    }
+
+    const moduleState = { rows: [], columns: [], section: 'home', filterKey: 'all', query: '', title: 'Module', filterField: 'id', semesterKey: 'all', departmentKey: 'all', autoRefresh: false, autoTimer: null, selectedIds: new Set() }
+    const moduleFormState = { mode: 'create', section: '', row: null, fields: [] }
+    const adminCharts = {}
+
+    const MODULE_DEFS = {
+      admin: {
+        home: { title: 'Admin Dashboard', endpoint: '/api/admin/overview', columns: ['metric', 'value'], filterBy: 'metric' },
+        users: { title: 'User Management', endpoint: '/api/admin/rbac/users', columns: ['userId', 'name', 'email', 'baseRole', 'accessRole', 'permissions'], filterBy: 'accessRole' },
+        profile: { title: 'Admin Profile', endpoint: '/api/auth/me', columns: ['id', 'name', 'email', 'role'], filterBy: 'role' },
+        academics: { title: 'Academic Management', endpoint: '/api/admin/hierarchy/overview', columns: ['metric', 'value'], filterBy: 'metric' },
+        faculties: { title: 'Faculties', endpoint: '/api/admin/hierarchy/faculties', columns: ['id', 'name', 'code'], filterBy: 'code' },
+        departments: { title: 'Departments', endpoint: '/api/admin/hierarchy/departments', columns: ['id', 'name', 'code', 'facultyName', 'hodName', 'programCount'], filterBy: 'facultyName' },
+        programs: { title: 'Programs', endpoint: '/api/admin/hierarchy/programs', columns: ['id', 'name', 'code', 'departmentName', 'durationYears', 'awardType', 'mode'], filterBy: 'departmentName' },
+        courses: { title: 'Courses', endpoint: '/api/admin/hierarchy/courses', columns: ['id', 'code', 'title', 'programName', 'creditHours', 'year', 'semester', 'lecturerAssigned'], filterBy: 'programName' },
+        yearsetup: { title: 'Academic Year & Semester Setup', endpoint: '/api/admin/hierarchy/semesters', columns: ['id', 'academicYearName', 'name', 'registrationOpen', 'registrationClose', 'gradesLocked', 'resultsPublished', 'attendanceLocked'], filterBy: 'academicYearName' },
+        enrollment: { title: 'Enrollment & Registration', endpoint: '/api/admin/admissions', columns: ['id', 'name', 'email', 'phone', 'programCode', 'intake', 'status', 'registrationNumber'], filterBy: 'status' },
+        registrations: { title: 'Portal Registrations', endpoint: '/api/admin/registrations', columns: ['id', 'userId', 'name', 'email', 'role', 'personNumber', 'status', 'createdAt', 'updatedAt'], filterBy: 'status' },
+        'exam-overview': { title: 'Exam Management Overview', endpoint: '/api/exams/overview', columns: ['metric', 'value'], filterBy: 'metric' },
+        'exam-sessions': { title: 'Exam Sessions', endpoint: '/api/exams/sessions', columns: ['id', 'academicYear', 'semester', 'examType', 'startDate', 'endDate', 'status'], filterBy: 'status' },
+        'exam-schedules': { title: 'Exam Scheduling', endpoint: '/api/exams/schedules', columns: ['id', 'sessionId', 'courseCode', 'courseTitle', 'examDate', 'examTime', 'examRoom', 'invigilator', 'published'], filterBy: 'courseCode' },
+        'exam-papers': { title: 'Question Papers', endpoint: '/api/exams/papers', columns: ['id', 'courseCode', 'title', 'type', 'durationMinutes', 'totalMarks', 'fileUrl', 'createdBy'], filterBy: 'courseCode' },
+        'exam-marks': { title: 'Marks Entry', endpoint: '/api/exams/marks', columns: ['id', 'studentId', 'courseId', 'catMarks', 'assignmentMarks', 'examMarks', 'totalMarks', 'grade', 'status', 'sessionId'], filterBy: 'status' },
+        'exam-moderation': { title: 'Moderation Queue', endpoint: '/api/exams/moderation', columns: ['id', 'courseCode', 'status', 'notes', 'reviewedBy', 'reviewedAt'], filterBy: 'status' },
+        'exam-approvals': { title: 'Result Approvals', endpoint: '/api/exams/approvals', columns: ['id', 'courseCode', 'status', 'approvedBy', 'approvedAt', 'releasedAt'], filterBy: 'status' },
+        'exam-transcripts': { title: 'Transcripts', endpoint: '/api/exams/transcripts', columns: ['studentId', 'name', 'email', 'cgpa', 'totalCredits'], filterBy: 'studentId' },
+        finance: { title: 'Finance & Fees', endpoint: '/api/finance/fee-structure', columns: ['id', 'level', 'tuitionPerSemester', 'upkeepPerSemester', 'currency'], filterBy: 'level' },
+        reports: { title: 'Reports & Analytics', endpoint: '/api/admin/registration/overview', columns: ['metric', 'value'], filterBy: 'metric' },
+        gradeapprovals: { title: 'Pending Grade Approvals', endpoint: '/api/admin/grades/pending', columns: ['sheetId', 'courseCode', 'courseTitle', 'lecturer', 'students', 'submittedAt'], filterBy: 'lecturer' },
+        messages: { title: 'Communication', endpoint: '/api/communications/announcements', columns: ['id', 'title', 'audience', 'createdAt'], filterBy: 'audience' },
+        settings: { title: 'System Settings', endpoint: '/api/academics/calendar', columns: ['id', 'title', 'date', 'type'], filterBy: 'type' },
+        roles: { title: 'Role Management', endpoint: '/api/admin/rbac/roles', columns: ['role', 'permissions'], filterBy: 'role' },
+        'role-history': { title: 'Role Assignment History', endpoint: '/api/admin/rbac/role-assignments/history', columns: ['timestamp', 'changedByName', 'userName', 'oldRole', 'newRole'], filterBy: 'changedByName' }
+      },
+      student: {
+        home: { title: 'Student Dashboard', endpoint: '/api/student/timetable', columns: ['id', 'courseCode', 'courseTitle', 'day', 'startTime', 'endTime', 'venue'], filterBy: 'day' },
+        profile: { title: 'Student Profile', endpoint: '/api/auth/me', columns: ['id', 'name', 'email', 'role'], filterBy: 'role' },
+        courses: { title: 'Courses & Registration', endpoint: '/api/student/registration/available-courses', columns: ['id', 'code', 'title', 'creditHours', 'year', 'semester', 'lecturerAssigned'], filterBy: 'semester' },
+        exams: { title: 'Assignments & Exams', endpoint: '/api/student/assignments', columns: ['id', 'courseId', 'title', 'description', 'dueDate'], filterBy: 'courseId' },
+        'exam-timetable': { title: 'Exam Timetable', endpoint: '/api/exams/schedules', columns: ['courseCode', 'courseTitle', 'examDate', 'examTime', 'examRoom', 'invigilator'], filterBy: 'courseCode' },
+        'exam-results': { title: 'Exam Results', endpoint: '/api/exams/results', columns: ['courseCode', 'courseTitle', 'score', 'grade', 'semesterCode'], filterBy: 'courseCode' },
+        'exam-transcript': { title: 'Transcript', endpoint: '/api/exams/transcripts', columns: ['courseCode', 'courseTitle', 'score', 'grade', 'semesterCode'], filterBy: 'courseCode' },
+        finance: { title: 'Financials', endpoint: '/api/finance/statement', columns: ['id', 'reference', 'amount', 'method', 'target', 'createdAt'], filterBy: 'method' },
+        common: { title: 'Common Modules', endpoint: '/api/communications/announcements', columns: ['id', 'title', 'audience', 'createdAt'], filterBy: 'audience' },
+        extras: { title: 'Extra Features', endpoint: '/api/extras/library', columns: ['id', 'title', 'author', 'available'], filterBy: 'available' }
+      },
+      lecturer: {
+        home: { title: 'Lecturer Dashboard', endpoint: '/api/lecturer/dashboard', columns: ['id', 'code', 'title', 'semesterId'], filterBy: 'semesterId' },
+        profile: { title: 'Lecturer Profile', endpoint: '/api/auth/me', columns: ['id', 'name', 'email', 'role'], filterBy: 'role' },
+        teaching: { title: 'Courses & Classes', endpoint: '/api/lecturer/dashboard', columns: ['id', 'code', 'title', 'semesterId'], filterBy: 'semesterId' },
+        assessment: { title: 'Assignments & Exams', endpoint: '/api/lecturer/dashboard', columns: ['id', 'code', 'title', 'semesterId'], filterBy: 'semesterId' },
+        'exam-papers': { title: 'Exam Papers', endpoint: '/api/exams/papers', columns: ['id', 'courseCode', 'title', 'type', 'durationMinutes', 'totalMarks', 'fileUrl'], filterBy: 'courseCode' },
+        'exam-marks': { title: 'Exam Marks', endpoint: '/api/exams/marks', columns: ['id', 'studentId', 'courseId', 'catMarks', 'assignmentMarks', 'examMarks', 'totalMarks', 'grade', 'status'], filterBy: 'status' },
+        reports: { title: 'Class Reports', endpoint: '/api/communications/notifications', columns: ['id', 'channel', 'audience', 'message', 'createdAt'], filterBy: 'channel' },
+        common: { title: 'Common Modules', endpoint: '/api/academics/calendar', columns: ['id', 'title', 'date', 'type'], filterBy: 'type' },
+        messages: { title: 'Communication', endpoint: '/api/communications/messages', columns: ['id', 'fromUserId', 'toUserId', 'body', 'createdAt'], filterBy: 'fromUserId' }
+      },
+      staff: {
+        home: { title: 'Staff Dashboard', endpoint: '/api/communications/announcements', columns: ['id', 'title', 'audience', 'createdAt'], filterBy: 'audience' },
+        profile: { title: 'Staff Profile', endpoint: '/api/auth/me', columns: ['id', 'name', 'email', 'role'], filterBy: 'role' },
+        finance: { title: 'Finance & Payments', endpoint: '/api/finance/fee-structure', columns: ['id', 'level', 'tuitionPerSemester', 'upkeepPerSemester', 'currency'], filterBy: 'level' },
+        services: { title: 'Student Services', endpoint: '/api/extras/clearance', columns: ['id', 'studentId', 'status', 'reason', 'createdAt'], filterBy: 'status' },
+        reports: { title: 'Support & Reports', endpoint: '/api/communications/notifications', columns: ['id', 'channel', 'audience', 'message', 'createdAt'], filterBy: 'channel' },
+        common: { title: 'Common Modules', endpoint: '/api/academics/calendar', columns: ['id', 'title', 'date', 'type'], filterBy: 'type' },
+        messages: { title: 'Communication', endpoint: '/api/communications/messages', columns: ['id', 'fromUserId', 'toUserId', 'body', 'createdAt'], filterBy: 'fromUserId' }
+      }
+    }
+
+    const BULK_IMPORT_MODULES = {
+      faculties: { label: 'Faculties', fields: ['name', 'code'] },
+      departments: { label: 'Departments', fields: ['name', 'code', 'facultyId', 'hodName'] },
+      programs: { label: 'Programs', fields: ['name', 'code', 'departmentId', 'durationYears', 'awardType', 'mode'] },
+      courses: { label: 'Courses', fields: ['code', 'title', 'programId', 'creditHours', 'year', 'semester', 'lecturerAssigned'] },
+      'academic-years': { label: 'Academic Years', fields: ['name', 'isActive'] },
+      yearsetup: { label: 'Semesters', fields: ['academicYearId', 'name', 'registrationOpen', 'registrationClose', 'gradesLocked', 'resultsPublished', 'attendanceLocked'] },
+      admissions: { label: 'Admissions', fields: ['name', 'email', 'phone', 'programCode', 'intake', 'status', 'registrationNumber'] },
+      'fee-structures': { label: 'Fee Structures', fields: ['level', 'tuitionPerSemester', 'upkeepPerSemester', 'currency'] },
+      'exam-sessions': { label: 'Exam Sessions', fields: ['academicYear', 'semester', 'examType', 'startDate', 'endDate', 'status'] },
+      'exam-schedules': { label: 'Exam Schedules', fields: ['sessionId', 'courseId', 'examDate', 'examTime', 'examRoom', 'invigilator', 'published'] },
+      'exam-papers': { label: 'Exam Papers', fields: ['courseId', 'title', 'type', 'durationMinutes', 'totalMarks', 'fileUrl'] },
+      'exam-marks': { label: 'Exam Marks', fields: ['studentId', 'courseId', 'catMarks', 'assignmentMarks', 'examMarks', 'status', 'sessionId'] },
+      'registrations-students': { label: 'Registration Students', fields: ['regNumber', 'name', 'program', 'email', 'dob'] },
+      'registrations-lecturers': { label: 'Registration Lecturers', fields: ['regNumber', 'name', 'department', 'email'] },
+      'registrations-staff': { label: 'Registration Staff', fields: ['regNumber', 'name', 'department', 'position', 'email'] },
+      users: { label: 'Users', fields: ['name', 'email', 'role', 'password', 'personNumber', 'phone'] }
+    }
+    const bulkState = { module: 'faculties', rows: [], parsed: false }
+
+    const FORM_DEFS = {
+      users: [
+        { key: 'name', label: 'Full Name', type: 'text', required: true },
+        { key: 'email', label: 'Email', type: 'email', required: true },
+        { key: 'role', label: 'User Role', type: 'select', required: true, options: ['super_admin', 'admin', 'registrar', 'finance_officer', 'hod', 'lecturer', 'student', 'non_teaching_staff', 'librarian', 'it_support', 'admissions_officer', 'alumni'], defaultValue: 'student' },
+        { key: 'personNumber', label: 'Reg/Staff Number', type: 'text' },
+        { key: 'phone', label: 'Phone', type: 'text' },
+        { key: 'autoGenerateUsername', label: 'Auto Username', type: 'select', options: ['true', 'false'], defaultValue: 'true' },
+        { key: 'username', label: 'Username (if custom)', type: 'text' },
+        { key: 'autoGeneratePassword', label: 'Auto Password', type: 'select', options: ['true', 'false'], defaultValue: 'true' },
+        { key: 'password', label: 'Password (if custom)', type: 'text' },
+        { key: 'mustChangePassword', label: 'Force Password Change', type: 'select', options: ['true', 'false'], defaultValue: 'true' }
+      ],
+      enrollment: [
+        { key: 'name', label: 'Applicant Name', type: 'text', required: true },
+        { key: 'email', label: 'Applicant Email', type: 'email', required: true },
+        { key: 'phone', label: 'Phone', type: 'text' },
+        { key: 'programCode', label: 'Program Code', type: 'text', required: true, defaultValue: 'BSC-CS' },
+        { key: 'intake', label: 'Intake', type: 'select', required: true, options: ['Jan', 'May', 'Sept'], defaultValue: 'Jan' },
+        { key: 'status', label: 'Status', type: 'select', options: ['pending', 'approved', 'rejected', 'waitlist'], defaultValue: 'pending' }
+      ],
+      faculties: [
+        { key: 'name', label: 'Faculty Name', type: 'text', required: true },
+        { key: 'code', label: 'Faculty Code', type: 'text', required: true }
+      ],
+      departments: [
+        { key: 'name', label: 'Department Name', type: 'text', required: true },
+        { key: 'code', label: 'Department Code', type: 'text', required: true },
+        { key: 'facultyId', label: 'Faculty ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'hodName', label: 'Head of Department', type: 'text' }
+      ],
+      programs: [
+        { key: 'name', label: 'Program Name', type: 'text', required: true },
+        { key: 'code', label: 'Program Code', type: 'text', required: true },
+        { key: 'departmentId', label: 'Department ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'durationYears', label: 'Duration Years', type: 'number', required: true, defaultValue: 4 },
+        { key: 'awardType', label: 'Award Type', type: 'select', required: true, options: ['Degree', 'Diploma', 'Certificate'], defaultValue: 'Degree' },
+        { key: 'mode', label: 'Mode', type: 'select', required: true, options: ['Full-time', 'Part-time'], defaultValue: 'Full-time' }
+      ],
+      courses: [
+        { key: 'code', label: 'Course Code', type: 'text', required: true },
+        { key: 'title', label: 'Course Title', type: 'text', required: true },
+        { key: 'programId', label: 'Program ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'creditHours', label: 'Credit Hours', type: 'number', required: true, defaultValue: 3 },
+        { key: 'year', label: 'Year', type: 'number', required: true, defaultValue: 1 },
+        { key: 'semester', label: 'Semester', type: 'number', required: true, defaultValue: 1 },
+        { key: 'lecturerAssigned', label: 'Lecturer Assigned', type: 'text' }
+      ],
+      yearsetup: [
+        { key: 'academicYearId', label: 'Academic Year ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'name', label: 'Semester Name', type: 'text', required: true, defaultValue: 'Semester 1' },
+        { key: 'registrationOpen', label: 'Registration Open', type: 'date', required: true },
+        { key: 'registrationClose', label: 'Registration Close', type: 'date', required: true },
+        { key: 'gradesLocked', label: 'Grades Locked', type: 'select', options: ['true', 'false'], defaultValue: 'false' },
+        { key: 'resultsPublished', label: 'Results Published', type: 'select', options: ['true', 'false'], defaultValue: 'false' },
+        { key: 'attendanceLocked', label: 'Attendance Locked', type: 'select', options: ['true', 'false'], defaultValue: 'false' }
+      ],
+      finance: [
+        { key: 'level', label: 'Level', type: 'text', required: true, defaultValue: 'Undergraduate' },
+        { key: 'tuitionPerSemester', label: 'Tuition/Semester', type: 'number', required: true, defaultValue: 1200 },
+        { key: 'upkeepPerSemester', label: 'Upkeep/Semester', type: 'number', required: true, defaultValue: 450 },
+        { key: 'currency', label: 'Currency', type: 'text', required: true, defaultValue: 'USD' }
+      ],
+      messages: [
+        { key: 'title', label: 'Announcement Title', type: 'text', required: true },
+        { key: 'body', label: 'Message', type: 'textarea', required: true },
+        { key: 'audience', label: 'Audience', type: 'select', required: true, options: ['all', 'students', 'lecturers', 'staff'], defaultValue: 'all' }
+      ],
+      settings: [
+        { key: 'title', label: 'Event Title', type: 'text', required: true },
+        { key: 'date', label: 'Date', type: 'date', required: true },
+        { key: 'type', label: 'Type', type: 'select', required: true, options: ['academic', 'exam', 'finance'], defaultValue: 'academic' }
+      ],
+      roles: [
+        { key: 'role', label: 'Role Key', type: 'text', required: true },
+        { key: 'permissions', label: 'Permissions (comma separated)', type: 'textarea', required: true }
+      ],
+      gradeapprovals: [
+        { key: 'semesterId', label: 'Semester ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'gradesLocked', label: 'Lock Grades', type: 'select', required: true, options: ['true', 'false'], defaultValue: 'true' },
+        { key: 'resultsPublished', label: 'Publish Results', type: 'select', required: true, options: ['true', 'false'], defaultValue: 'false' },
+        { key: 'attendanceLocked', label: 'Lock Attendance', type: 'select', required: true, options: ['true', 'false'], defaultValue: 'false' }
+      ],
+      'exam-sessions': [
+        { key: 'academicYear', label: 'Academic Year', type: 'text', required: true, defaultValue: '2026/2027' },
+        { key: 'semester', label: 'Semester', type: 'text', required: true, defaultValue: 'Semester 1' },
+        { key: 'examType', label: 'Exam Type', type: 'select', required: true, options: ['CAT', 'Midterm', 'Final Exam', 'Supplementary Exam', 'Special Exam'], defaultValue: 'Final Exam' },
+        { key: 'startDate', label: 'Start Date', type: 'date', required: true },
+        { key: 'endDate', label: 'End Date', type: 'date', required: true },
+        { key: 'status', label: 'Status', type: 'select', required: true, options: ['draft', 'scheduled', 'active', 'closed'], defaultValue: 'scheduled' }
+      ],
+      'exam-schedules': [
+        { key: 'sessionId', label: 'Session ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'courseId', label: 'Course ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'examDate', label: 'Exam Date', type: 'date', required: true },
+        { key: 'examTime', label: 'Exam Time', type: 'text', required: true, defaultValue: '09:00' },
+        { key: 'examRoom', label: 'Exam Room', type: 'text', required: true, defaultValue: 'Main Hall' },
+        { key: 'invigilator', label: 'Invigilator', type: 'text' },
+        { key: 'published', label: 'Published', type: 'select', options: ['true', 'false'], defaultValue: 'false' }
+      ],
+      'exam-papers': [
+        { key: 'courseId', label: 'Course ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'title', label: 'Paper Title', type: 'text', required: true, defaultValue: 'Final Exam Paper' },
+        { key: 'type', label: 'Paper Type', type: 'select', required: true, options: ['CAT', 'Midterm', 'Final Exam', 'Supplementary Exam', 'Special Exam'], defaultValue: 'Final Exam' },
+        { key: 'durationMinutes', label: 'Duration (minutes)', type: 'number', required: true, defaultValue: 120 },
+        { key: 'totalMarks', label: 'Total Marks', type: 'number', required: true, defaultValue: 100 },
+        { key: 'fileUrl', label: 'File URL', type: 'text' }
+      ],
+      'exam-marks': [
+        { key: 'studentId', label: 'Student ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'courseId', label: 'Course ID', type: 'number', required: true, defaultValue: 1 },
+        { key: 'catMarks', label: 'CAT Marks', type: 'number', required: true, defaultValue: 20 },
+        { key: 'assignmentMarks', label: 'Assignment Marks', type: 'number', required: true, defaultValue: 10 },
+        { key: 'examMarks', label: 'Exam Marks', type: 'number', required: true, defaultValue: 60 },
+        { key: 'status', label: 'Status', type: 'select', options: ['draft', 'submitted'], defaultValue: 'draft' },
+        { key: 'sessionId', label: 'Session ID', type: 'number' }
+      ],
+      studentCourses: [
+        { key: 'courseIds', label: 'Course IDs (comma separated)', type: 'text', required: true, defaultValue: '1,2' }
+      ]
+    }
+
+    const el = (id) => document.getElementById(id)
+
+    function applyInstitutionBranding(settings) {
+      if (!settings) return
+      state.institution = settings
+      document.title = `${settings.shortName || settings.institutionName || 'Portal'} Portal`
+      const mainName = settings.institutionName || 'Tech Hub University'
+      const shortName = settings.shortName || 'TECH HUB'
+      const motto = settings.motto || ''
+      const primary = settings.primaryColor || '#1f3554'
+      const secondary = settings.secondaryColor || '#d59835'
+      const logo = settings.mainLogo || ''
+      const favicon = settings.favicon || ''
+
+      document.documentElement.style.setProperty('--green', primary)
+      document.documentElement.style.setProperty('--green-dark', primary)
+      document.documentElement.style.setProperty('--amber', secondary)
+      el('loginInstitutionName').textContent = mainName
+      el('loginInstitutionMotto').textContent = `Welcome to ${mainName}. ${motto}`
+      el('leftBottomBrand').textContent = `${shortName} © ${new Date().getFullYear()}`
+      el('sidebarBrand').textContent = shortName
+      el('footerInstitution').innerHTML = `${mainName}. <b>All Rights Reserved.</b>`
+
+      const crest = el('loginCrest')
+      if (logo) {
+        crest.style.backgroundImage = `url(${logo})`
+        crest.style.backgroundSize = 'cover'
+        crest.style.backgroundPosition = 'center'
+        crest.textContent = ''
+      } else {
+        crest.style.backgroundImage = ''
+        crest.textContent = shortName
+      }
+      if (favicon) el('appFavicon').href = favicon
+      applyRegistrationCountdown(settings)
+      applyMaintenanceMode(settings)
+    }
+
+    function applyRegistrationCountdown(settings) {
+      const enabled = settings.registrationCountdownEnabled !== false
+      const target = settings.registrationCountdownTarget || ''
+      const label = settings.registrationCountdownLabel || 'Registration deadline'
+      const message = settings.registrationCountdownMessage || 'Please complete registration before the deadline.'
+      const notice = document.querySelector('.notice')
+      if (!notice) return
+      if (!enabled || !target) {
+        notice.classList.add('hidden')
+        if (countdownTimer) {
+          clearInterval(countdownTimer)
+          countdownTimer = null
+        }
+        return
+      }
+      notice.classList.remove('hidden')
+      el('countdownLabel').textContent = label
+      el('countdownMessage').textContent = message
+      startCountdown(target)
+    }
+
+    function applyMaintenanceMode(settings) {
+      maintenanceState.enabled = Boolean(settings.maintenanceMode)
+      maintenanceState.message = settings.maintenanceMessage || 'Portal is under maintenance.'
+      maintenanceState.endsAt = settings.maintenanceEndsAt || ''
+      const banner = el('maintenanceBanner')
+      if (!banner) return
+      if (maintenanceState.enabled) {
+        banner.style.display = 'block'
+        el('maintenanceMessage').textContent = maintenanceState.message
+        el('maintenanceEta').textContent = maintenanceState.endsAt ? `Expected back: ${new Date(maintenanceState.endsAt).toLocaleString()}` : ''
+        el('registerBtn').disabled = true
+        el('forgotBtn').disabled = true
+      } else {
+        banner.style.display = 'none'
+        el('registerBtn').disabled = false
+        el('forgotBtn').disabled = false
+      }
+    }
+
+    async function fetchPublicInstitutionSettings() {
+      try {
+        const res = await fetch(baseUrl + '/api/public/institution-settings')
+        if (!res.ok) return
+        const data = await res.json()
+        applyInstitutionBranding(data)
+      } catch (_) {}
+    }
+
+    function bindFileToInput(fileInputId, targetInputId) {
+      el(fileInputId).addEventListener('change', () => {
+        const file = el(fileInputId).files && el(fileInputId).files[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = () => {
+          el(targetInputId).value = String(reader.result || '')
+          renderInstitutionPreview()
+        }
+        reader.readAsDataURL(file)
+      })
+    }
+
+    function collectInstitutionPayload() {
+      let campuses = []
+      try {
+        campuses = JSON.parse(el('instCampuses').value || '[]')
+      } catch (_) {}
+      return {
+        institutionName: el('instName').value.trim(),
+        shortName: el('instShortName').value.trim(),
+        motto: el('instMotto').value.trim(),
+        yearEstablished: el('instYear').value.trim(),
+        registrationNumber: el('instRegNo').value.trim(),
+        email: el('instEmail').value.trim(),
+        phone: el('instPhone').value.trim(),
+        alternativePhone: el('instAltPhone').value.trim(),
+        websiteUrl: el('instWebsite').value.trim(),
+        country: el('instCountry').value.trim(),
+        countyState: el('instCounty').value.trim(),
+        cityTown: el('instCity').value.trim(),
+        physicalAddress: el('instAddress').value.trim(),
+        poBox: el('instPoBox').value.trim(),
+        postalCode: el('instPostalCode').value.trim(),
+        mainLogo: el('instMainLogo').value.trim(),
+        favicon: el('instFavicon').value.trim(),
+        officialSeal: el('instSeal').value.trim(),
+        primaryColor: el('instPrimaryColor').value,
+        secondaryColor: el('instSecondaryColor').value,
+        campuses,
+        registrationCountdownEnabled: String(el('instRegCountdownEnabled').value) === 'true',
+        registrationCountdownTarget: el('instRegCountdownTarget').value,
+        registrationCountdownLabel: el('instRegCountdownLabel').value.trim(),
+        registrationCountdownMessage: el('instRegCountdownMessage').value.trim(),
+        maintenanceMode: String(el('instMaintenanceMode').value) === 'true',
+        maintenanceMessage: el('instMaintenanceMessage').value.trim(),
+        maintenanceEndsAt: el('instMaintenanceEndsAt').value
+      }
+    }
+
+    function renderInstitutionPreview() {
+      const data = collectInstitutionPayload()
+      el('instPreviewBar').style.background = data.primaryColor || '#1f3554'
+      el('instPreviewName').textContent = data.institutionName || 'Institution Name'
+      el('instPreviewMotto').textContent = data.motto || 'Institution motto'
+      el('instPreviewLogo').src = data.mainLogo || ''
+      el('instPreviewFooter').textContent = `P.O. Box ${data.poBox || '-'} ${data.postalCode || ''} ${data.cityTown || ''} | ${data.phone || ''}`
+    }
+
+    function fillInstitutionForm(settings, canEdit) {
+      el('instName').value = settings.institutionName || ''
+      el('instShortName').value = settings.shortName || ''
+      el('instMotto').value = settings.motto || ''
+      el('instYear').value = settings.yearEstablished || ''
+      el('instRegNo').value = settings.registrationNumber || ''
+      el('instEmail').value = settings.email || ''
+      el('instPhone').value = settings.phone || ''
+      el('instAltPhone').value = settings.alternativePhone || ''
+      el('instWebsite').value = settings.websiteUrl || ''
+      el('instCountry').value = settings.country || ''
+      el('instCounty').value = settings.countyState || ''
+      el('instCity').value = settings.cityTown || ''
+      el('instAddress').value = settings.physicalAddress || ''
+      el('instPoBox').value = settings.poBox || ''
+      el('instPostalCode').value = settings.postalCode || ''
+      el('instMainLogo').value = settings.mainLogo || ''
+      el('instFavicon').value = settings.favicon || ''
+      el('instSeal').value = settings.officialSeal || ''
+      el('instPrimaryColor').value = settings.primaryColor || '#1f3554'
+      el('instSecondaryColor').value = settings.secondaryColor || '#d59835'
+      el('instRegCountdownEnabled').value = settings.registrationCountdownEnabled === false ? 'false' : 'true'
+      el('instRegCountdownTarget').value = settings.registrationCountdownTarget || ''
+      el('instRegCountdownLabel').value = settings.registrationCountdownLabel || ''
+      el('instRegCountdownMessage').value = settings.registrationCountdownMessage || ''
+      el('instMaintenanceMode').value = settings.maintenanceMode ? 'true' : 'false'
+      el('instMaintenanceMessage').value = settings.maintenanceMessage || ''
+      el('instMaintenanceEndsAt').value = settings.maintenanceEndsAt || ''
+      el('instCampuses').value = JSON.stringify(settings.campuses || [], null, 2)
+      renderInstitutionPreview()
+
+      const ids = [
+        'instName', 'instShortName', 'instMotto', 'instYear', 'instRegNo', 'instEmail', 'instPhone', 'instAltPhone',
+        'instWebsite', 'instCountry', 'instCounty', 'instCity', 'instAddress', 'instPoBox', 'instPostalCode',
+        'instMainLogo', 'instFavicon', 'instSeal', 'instPrimaryColor', 'instSecondaryColor', 'instCampuses',
+        'instMainLogoFile', 'instFaviconFile', 'instSealFile',
+        'instRegCountdownEnabled', 'instRegCountdownTarget', 'instRegCountdownLabel', 'instRegCountdownMessage',
+        'instMaintenanceMode', 'instMaintenanceMessage', 'instMaintenanceEndsAt'
+      ]
+      ids.forEach((id) => { el(id).disabled = !canEdit })
+      el('instSaveBtn').disabled = !canEdit
+      if (!canEdit) showToast('Read-only institution settings. Only Super Admin/Registrar can edit.')
+    }
+
+    async function loadInstitutionSettingsAdmin() {
+      const out = await api('/api/admin/institution-settings')
+      fillInstitutionForm(out, !!out.canEdit)
+      applyInstitutionBranding(out)
+      const history = await api('/api/admin/institution-settings/history').catch(() => [])
+      const select = el('instHistorySelect')
+      select.innerHTML = history.length
+        ? history.map((h) => `<option value="${h.version}">Version ${h.version} - ${new Date(h.updatedAt).toLocaleString()} by ${h.updatedByName || 'admin'}</option>`).join('')
+        : '<option value="">No history yet</option>'
+      loadLmsIntegrationsPreview().catch(() => {})
+    }
+
+    async function loadLmsIntegrationsPreview() {
+      if (!el('lmsProvider')) return
+      try {
+        const rows = await api('/api/lms/integrations')
+        const enabled = (rows || []).filter((r) => r.enabled)
+        const moodle = enabled.find((r) => /moodle/i.test(r.provider) || /moodle/i.test(r.url || ''))
+        const active = moodle || enabled[0]
+        el('lmsProvider').value = active ? active.provider : 'None'
+        el('lmsMoodleUrl').value = active ? active.url : ''
+        el('lmsNote').textContent = enabled.length
+          ? `Enabled LMS: ${enabled.map((r) => r.provider).join(', ')}`
+          : 'No enabled LMS provider found.'
+      } catch (err) {
+        el('lmsNote').textContent = err.message
+      }
+    }
+
+    async function openLmsLink() {
+      const rows = await api('/api/lms/integrations')
+      const enabled = (rows || []).filter((r) => r.enabled && r.url)
+      const moodle = enabled.find((r) => /moodle/i.test(r.provider) || /moodle/i.test(r.url || ''))
+      const target = moodle || enabled[0]
+      if (!target) {
+        showToast('No enabled LMS link configured yet.')
+        return { error: 'No LMS link configured.' }
+      }
+      const win = window.open(target.url, '_blank', 'noopener')
+      if (!win) showToast('Popup blocked. Allow popups to open Moodle.')
+      return { ok: true, provider: target.provider, url: target.url }
+    }
+
+    function renderBulkModuleOptions() {
+      const select = el('bulkModuleSelect')
+      if (!select) return
+      const options = Object.entries(BULK_IMPORT_MODULES)
+        .map(([key, def]) => `<option value="${key}">${def.label}</option>`)
+      select.innerHTML = options.join('')
+      select.value = bulkState.module
+      select.onchange = () => {
+        bulkState.module = select.value
+        renderBulkHelp()
+      }
+      renderBulkHelp()
+    }
+
+    function renderBulkHelp() {
+      const def = BULK_IMPORT_MODULES[bulkState.module]
+      el('bulkHelpText').textContent = def
+        ? `Expected fields: ${def.fields.join(', ')}`
+        : 'Select a module to see expected fields.'
+    }
+
+    function renderBulkPreview() {
+      const head = el('bulkPreviewHead')
+      const body = el('bulkPreviewBody')
+      const info = el('bulkPreviewInfo')
+      const rows = bulkState.rows || []
+      if (!rows.length) {
+        head.innerHTML = ''
+        body.innerHTML = ''
+        info.textContent = 'No records parsed yet.'
+        return
+      }
+      const columns = Object.keys(rows[0])
+      head.innerHTML = columns.map((c) => `<th>${c}</th>`).join('')
+      body.innerHTML = rows.slice(0, 5).map((row) => {
+        const cols = columns.map((c) => `<td>${row[c] ?? ''}</td>`).join('')
+        return `<tr>${cols}</tr>`
+      }).join('')
+      info.textContent = `Parsed ${rows.length} record(s). Showing first 5.`
+    }
+
+    async function parseBulkInput() {
+      let text = el('bulkPasteArea').value.trim()
+      if (!text) {
+        const file = el('bulkFileInput').files?.[0]
+        if (file) text = await file.text()
+      }
+      if (!text) {
+        showToast('Upload a file or paste data to preview.')
+        return
+      }
+      try {
+        bulkState.rows = parseBulkText(text)
+        bulkState.parsed = true
+        renderBulkPreview()
+      } catch (err) {
+        showToast(`Failed to parse file: ${err.message}`)
+      }
+    }
+
+    async function importBulkRows() {
+      if (!bulkState.parsed || !bulkState.rows.length) {
+        showToast('Preview data before importing.')
+        return
+      }
+      const payload = {
+        module: bulkState.module,
+        rows: bulkState.rows
+      }
+      const out = await api('/api/admin/bulk-import', { method: 'POST', body: JSON.stringify(payload) })
+      showToast(out)
+      bulkState.rows = []
+      bulkState.parsed = false
+      el('bulkPasteArea').value = ''
+      el('bulkFileInput').value = ''
+      renderBulkPreview()
+      if (MODULE_DEFS.admin[bulkState.module]) await renderModule(bulkState.module)
+    }
+
+    function toRows(payload) {
+      if (Array.isArray(payload)) return payload
+      if (payload && Array.isArray(payload.rows)) return payload.rows
+      if (payload && Array.isArray(payload.courses)) return payload.courses
+      if (payload && Array.isArray(payload.assignments)) return payload.assignments
+      if (payload && Array.isArray(payload.registrations)) return payload.registrations
+      if (payload && Array.isArray(payload.results)) return payload.results
+      if (payload && typeof payload === 'object') {
+        if (Object.keys(payload).length === 0) return []
+        if (payload.id || payload.email || payload.name) return [payload]
+        return Object.entries(payload).map(([metric, value]) => {
+          if (Array.isArray(value)) return { metric, value: `${value.length} item(s)` }
+          if (value && typeof value === 'object') return { metric, value: 'Configured' }
+          return { metric, value }
+        })
+      }
+      return []
+    }
+
+    function parseCsvLine(line) {
+      const out = []
+      let current = ''
+      let inQuotes = false
+      for (let i = 0; i < line.length; i += 1) {
+        const char = line[i]
+        if (char === '"' && line[i + 1] === '"') {
+          current += '"'
+          i += 1
+          continue
+        }
+        if (char === '"') {
+          inQuotes = !inQuotes
+          continue
+        }
+        if (char === ',' && !inQuotes) {
+          out.push(current)
+          current = ''
+          continue
+        }
+        current += char
+      }
+      out.push(current)
+      return out.map((v) => v.trim())
+    }
+
+    function parseCsv(text) {
+      const lines = text.split(/\r?\n/).filter((l) => l.trim() !== '')
+      if (!lines.length) return []
+      const headers = parseCsvLine(lines[0])
+      return lines.slice(1).map((line) => {
+        const values = parseCsvLine(line)
+        const row = {}
+        headers.forEach((h, idx) => { row[h] = values[idx] ?? '' })
+        return row
+      })
+    }
+
+    function parseBulkText(text) {
+      const trimmed = String(text || '').trim()
+      if (!trimmed) return []
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        const parsed = JSON.parse(trimmed)
+        if (Array.isArray(parsed)) return parsed
+        if (parsed && Array.isArray(parsed.rows)) return parsed.rows
+        return [parsed]
+      }
+      return parseCsv(trimmed)
+    }
+
+    function supportsBulkSelection(role, section) {
+      if (role !== 'admin') return false
+      const bulkSections = [
+        'users', 'faculties', 'departments', 'programs', 'courses', 'yearsetup', 'enrollment', 'registrations', 'finance',
+        'exam-sessions', 'exam-schedules', 'exam-papers', 'exam-marks', 'exam-moderation', 'exam-approvals'
+      ]
+      return bulkSections.includes(section)
+    }
+
+    function getRowId(section, row) {
+      if (!row) return null
+      if (section === 'users') return row.userId ?? row.id
+      if (section === 'gradeapprovals') return row.sheetId
+      return row.id ?? row.userId ?? row.sheetId ?? null
+    }
+
+    function rowActionsForSection(role, section) {
+      if (role === 'admin' && section === 'gradeapprovals') return ['view', 'approve', 'reject']
+      if (role === 'admin' && section === 'registrations') return ['view', 'approve', 'reject', 'reset', 'delete']
+      if (role === 'admin' && section === 'exam-moderation') return ['view', 'approve', 'return']
+      if (role === 'admin' && section === 'exam-approvals') return ['view', 'approve', 'reject', 'release']
+      if (role === 'admin' && section === 'exam-schedules') return ['view', 'edit', 'publish', 'delete']
+      if (role === 'admin' && ['exam-sessions', 'exam-papers', 'exam-marks'].includes(section)) return ['view', 'edit', 'delete']
+      if (role === 'admin' && ['exam-overview', 'exam-transcripts'].includes(section)) return ['view']
+      if (role === 'admin' && ['home', 'profile', 'reports', 'finance', 'messages', 'settings'].includes(section)) return ['view']
+      if (role === 'admin' && section === 'users') return ['view', 'edit', 'reset', 'delete']
+      if (role === 'admin' && section === 'roles') return ['view', 'edit', 'delete']
+      if (role === 'admin' && ['enrollment', 'faculties', 'departments', 'programs', 'courses', 'yearsetup'].includes(section)) return ['view', 'edit', 'delete']
+      if (role === 'lecturer' && ['exam-papers', 'exam-marks'].includes(section)) return ['view', 'edit', 'delete']
+      if (role === 'student' || role === 'lecturer' || role === 'staff') return ['view']
+      return ['view']
+    }
+
+    function hideModuleForm() {
+      el('moduleFormPanel').classList.add('hidden')
+      moduleFormState.mode = 'create'
+      moduleFormState.section = ''
+      moduleFormState.row = null
+      moduleFormState.fields = []
+    }
+
+    function renderModuleFormField(field, value) {
+      const val = value ?? field.defaultValue ?? ''
+      if (field.type === 'select') {
+        return `<div><label>${field.label}</label><select data-form-key="${field.key}">${(field.options || []).map((opt) => `<option value="${opt}" ${String(opt) === String(val) ? 'selected' : ''}>${opt}</option>`).join('')}</select></div>`
+      }
+      if (field.type === 'textarea') {
+        return `<div><label>${field.label}</label><textarea data-form-key="${field.key}" rows="3">${val}</textarea></div>`
+      }
+      return `<div><label>${field.label}</label><input data-form-key="${field.key}" type="${field.type || 'text'}" value="${val}" /></div>`
+    }
+
+    function openModuleForm(mode, section, row = null) {
+      const role = normalizeRole(state.user.role)
+      const key = role === 'student' && section === 'courses' ? 'studentCourses' : section
+      const fields = (FORM_DEFS[key] || []).map((f) => ({ ...f }))
+      if (!fields || !fields.length) {
+        showToast('No form available for this module.')
+        return
+      }
+      if (mode === 'edit' && section === 'users') {
+        fields.forEach((f) => {
+          if (f.key === 'password') {
+            f.required = false
+            f.defaultValue = ''
+          }
+          if (f.key === 'autoGeneratePassword' || f.key === 'autoGenerateUsername') {
+            f.defaultValue = 'false'
+          }
+        })
+      }
+      moduleFormState.mode = mode
+      moduleFormState.section = section
+      moduleFormState.row = row
+      moduleFormState.fields = fields
+      el('moduleFormTitle').textContent = `${mode === 'edit' ? 'Edit' : 'Add'} - ${moduleState.title}`
+      el('moduleFormGrid').innerHTML = fields.map((field) => renderModuleFormField(field, row ? row[field.key] : undefined)).join('')
+      el('moduleFormPanel').classList.remove('hidden')
+    }
+
+    function collectModuleFormPayload() {
+      const payload = {}
+      moduleFormState.fields.forEach((field) => {
+        const input = document.querySelector(`[data-form-key="${field.key}"]`)
+        if (!input) return
+        let value = input.value
+        if (field.required && String(value).trim() === '') throw new Error(`${field.label} is required.`)
+        if (field.type === 'number') value = Number(value)
+        if (field.key === 'courseIds') {
+          value = String(value).split(',').map((v) => Number(v.trim())).filter((n) => Number.isFinite(n))
+        }
+        if (field.key === 'gradesLocked' || field.key === 'resultsPublished' || field.key === 'attendanceLocked'
+          || field.key === 'autoGenerateUsername' || field.key === 'autoGeneratePassword' || field.key === 'mustChangePassword'
+          || field.key === 'published') {
+          value = String(value).toLowerCase() === 'true'
+        }
+        payload[field.key] = value
+      })
+      return payload
+    }
+
+    async function submitModuleForm() {
+      const role = normalizeRole(state.user.role)
+      const section = moduleFormState.section
+      const mode = moduleFormState.mode
+      const row = moduleFormState.row
+      const payload = collectModuleFormPayload()
+      let response = null
+
+      if (role === 'admin' && section === 'users') {
+        if (mode === 'edit' && !payload.password) delete payload.password
+        const path = mode === 'edit' ? `/api/admin/users/${row.id}` : '/api/admin/users'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'enrollment') {
+        const path = mode === 'edit' ? `/api/admin/admissions/${row.id}` : '/api/admin/admissions'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'faculties') {
+        const path = mode === 'edit' ? `/api/admin/hierarchy/faculties/${row.id}` : '/api/admin/hierarchy/faculties'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'departments') {
+        const path = mode === 'edit' ? `/api/admin/hierarchy/departments/${row.id}` : '/api/admin/hierarchy/departments'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'programs') {
+        const path = mode === 'edit' ? `/api/admin/hierarchy/programs/${row.id}` : '/api/admin/hierarchy/programs'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'courses') {
+        const path = mode === 'edit' ? `/api/admin/hierarchy/courses/${row.id}` : '/api/admin/hierarchy/courses'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'yearsetup') {
+        const path = mode === 'edit' ? `/api/admin/hierarchy/semesters/${row.id}` : '/api/admin/hierarchy/semesters'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'exam-sessions') {
+        const path = mode === 'edit' ? `/api/exams/sessions/${row.id}` : '/api/exams/sessions'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'exam-schedules') {
+        const path = mode === 'edit' ? `/api/exams/schedules/${row.id}` : '/api/exams/schedules'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if ((role === 'admin' || role === 'lecturer') && section === 'exam-papers') {
+        const path = mode === 'edit' ? `/api/exams/papers/${row.id}` : '/api/exams/papers'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if ((role === 'admin' || role === 'lecturer') && section === 'exam-marks') {
+        const path = mode === 'edit' ? `/api/exams/marks/${row.id}` : '/api/exams/marks'
+        const method = mode === 'edit' ? 'PATCH' : 'POST'
+        response = await api(path, { method, body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'finance') {
+        response = await api('/api/finance/fee-structure', { method: 'POST', body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'messages') {
+        response = await api('/api/communications/announcements', { method: 'POST', body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'settings') {
+        response = await api('/api/academics/calendar', { method: 'POST', body: JSON.stringify(payload) })
+      } else if (role === 'admin' && section === 'roles') {
+        // permissions stored as comma-separated list in form
+        const perms = String(payload.permissions || '').split(',').map((p) => p.trim()).filter(Boolean)
+        const body = { role: payload.role, permissions: perms }
+        if (mode === 'edit' && moduleFormState.row) {
+          response = await api(`/api/admin/rbac/roles/${encodeURIComponent(moduleFormState.row.role)}`, { method: 'PATCH', body: JSON.stringify(body) })
+        } else {
+          response = await api('/api/admin/rbac/roles', { method: 'POST', body: JSON.stringify(body) })
+        }
+      } else if (role === 'admin' && section === 'gradeapprovals') {
+        response = await api('/api/admin/grades/semester-control', { method: 'POST', body: JSON.stringify(payload) })
+      } else if (role === 'student' && section === 'courses') {
+        response = await api('/api/student/course-registrations', { method: 'POST', body: JSON.stringify(payload) })
+      } else {
+        throw new Error('Form submit is not available for this module.')
+      }
+      hideModuleForm()
+      await renderModule(section)
+      if (section === 'users') await loadUsers()
+      if (response?.credentials) {
+        showToast(`Account created. Username: ${response.credentials.username} | Temporary Password: ${response.credentials.temporaryPassword}`)
+        return
+      }
+      showToast(`${moduleState.title} ${mode === 'edit' ? 'updated' : 'created'} successfully.`)
+    }
+
+    async function handleRowAction(action, row) {
+      const role = normalizeRole(state.user.role)
+      if (action === 'view') {
+        showToast(`Opened details for ${row.name || row.title || row.code || `ID ${row.id}`}.`)
+        return
+      }
+      if (role === 'admin' && moduleState.section === 'registrations') {
+        if (action === 'approve') {
+          await api(`/api/admin/registrations/${row.id}/approve`, { method: 'PATCH', body: JSON.stringify({}) })
+          await renderModule('registrations')
+          showToast('Registration approved.')
+          return
+        }
+        if (action === 'reject') {
+          const reason = prompt('Reason for rejection:') || 'Rejected by admin'
+          await api(`/api/admin/registrations/${row.id}/reject`, { method: 'PATCH', body: JSON.stringify({ reason }) })
+          await renderModule('registrations')
+          showToast('Registration rejected.')
+          return
+        }
+        if (action === 'reset') {
+          await api(`/api/admin/registrations/${row.id}/reset`, { method: 'PATCH', body: JSON.stringify({}) })
+          await renderModule('registrations')
+          showToast('Registration reset.')
+          return
+        }
+        if (action === 'delete') {
+          if (!confirm('Delete this account? This will remove the user.')) return
+          await api(`/api/admin/users/${row.userId}`, { method: 'DELETE' })
+          await renderModule('registrations')
+          showToast('User deleted.')
+          return
+        }
+      }
+      if (role === 'admin' && moduleState.section === 'exam-schedules' && action === 'publish') {
+        await api(`/api/exams/schedules/${row.id}/publish`, { method: 'POST', body: JSON.stringify({}) })
+        await renderModule('exam-schedules')
+        showToast('Exam schedule published.')
+        return
+      }
+      if (role === 'admin' && moduleState.section === 'exam-moderation') {
+        if (action === 'approve') {
+          await api(`/api/exams/moderation/${row.id}/approve`, { method: 'PATCH', body: JSON.stringify({}) })
+          await renderModule('exam-moderation')
+          showToast('Moderation approved.')
+          return
+        }
+        if (action === 'return') {
+          const notes = prompt('Notes for lecturer:') || 'Returned for correction'
+          await api(`/api/exams/moderation/${row.id}/return`, { method: 'PATCH', body: JSON.stringify({ notes }) })
+          await renderModule('exam-moderation')
+          showToast('Moderation returned to lecturer.')
+          return
+        }
+      }
+      if (role === 'admin' && moduleState.section === 'exam-approvals') {
+        if (action === 'approve') {
+          await api(`/api/exams/approvals/${row.id}/approve`, { method: 'PATCH', body: JSON.stringify({}) })
+          await renderModule('exam-approvals')
+          showToast('Results approved.')
+          return
+        }
+        if (action === 'reject') {
+          const reason = prompt('Reason for rejection:') || 'Rejected by exam board'
+          await api(`/api/exams/approvals/${row.id}/reject`, { method: 'PATCH', body: JSON.stringify({ reason }) })
+          await renderModule('exam-approvals')
+          showToast('Results rejected.')
+          return
+        }
+        if (action === 'release') {
+          await api(`/api/exams/approvals/${row.id}/release`, { method: 'PATCH', body: JSON.stringify({}) })
+          await renderModule('exam-approvals')
+          showToast('Results released to students.')
+          return
+        }
+      }
+      if (action === 'approve' && role === 'admin' && moduleState.section === 'gradeapprovals') {
+        await api(`/api/admin/grades/${row.sheetId}/approve`, { method: 'POST', body: JSON.stringify({}) })
+        await renderModule('gradeapprovals')
+        showToast('Grade sheet approved.')
+        return
+      }
+      if (action === 'reject' && role === 'admin' && moduleState.section === 'gradeapprovals') {
+        await api(`/api/admin/grades/${row.sheetId}/reject`, { method: 'POST', body: JSON.stringify({ comment: 'Returned for correction.' }) })
+        await renderModule('gradeapprovals')
+        showToast('Grade sheet rejected and returned to lecturer.')
+        return
+      }
+      if (action === 'edit' && role === 'admin' && ['users', 'enrollment', 'faculties', 'departments', 'programs', 'courses', 'yearsetup', 'exam-sessions', 'exam-schedules', 'exam-papers', 'exam-marks'].includes(moduleState.section)) {
+        openModuleForm('edit', moduleState.section, row)
+        return
+      }
+      if (action === 'edit' && role === 'lecturer' && ['exam-papers', 'exam-marks'].includes(moduleState.section)) {
+        openModuleForm('edit', moduleState.section, row)
+        return
+      }
+      if (action === 'reset' && role === 'admin' && moduleState.section === 'users') {
+        const out = await api(`/api/admin/users/${row.id}/reset-password`, { method: 'POST', body: JSON.stringify({}) })
+        showToast(`Password reset. Temp password: ${out.temporaryPassword}`)
+        return
+      }
+      if (role === 'admin' && moduleState.section === 'users' && action === 'delete' && row.id !== state.user.id) {
+        if (!confirm(`Delete ${row.name || row.email}? Related records will also be removed.`)) return
+        await api(`/api/admin/users/${row.id}`, { method: 'DELETE' })
+        await renderModule('users')
+        await loadUsers()
+        showToast('User deleted.')
+        return
+      }
+      if (role === 'admin' && moduleState.section === 'roles' && action === 'delete') {
+        if (!confirm(`Delete role ${row.role}?`)) return
+        await api(`/api/admin/rbac/roles/${encodeURIComponent(row.role)}`, { method: 'DELETE' })
+        await renderModule('roles')
+        showToast('Role deleted.')
+        return
+      }
+      if (role === 'admin' && moduleState.section === 'enrollment' && action === 'delete') {
+        if (!confirm(`Delete admission for ${row.name || row.email}?`)) return
+        await api(`/api/admin/admissions/${row.id}`, { method: 'DELETE' })
+        await renderModule('enrollment')
+        showToast('Admission deleted.')
+        return
+      }
+      if (role === 'admin' && ['faculties', 'departments', 'programs', 'courses', 'yearsetup'].includes(moduleState.section) && action === 'delete') {
+        if (!confirm('Delete this record?')) return
+        const routeBySection = {
+          faculties: '/api/admin/hierarchy/faculties',
+          departments: '/api/admin/hierarchy/departments',
+          programs: '/api/admin/hierarchy/programs',
+          courses: '/api/admin/hierarchy/courses',
+          yearsetup: '/api/admin/hierarchy/semesters'
+        }
+        await api(`${routeBySection[moduleState.section]}/${row.id}`, { method: 'DELETE' })
+        await renderModule(moduleState.section)
+        showToast('Record deleted.')
+        return
+      }
+      if ((role === 'admin' || role === 'lecturer') && ['exam-papers', 'exam-marks'].includes(moduleState.section) && action === 'delete') {
+        if (!confirm('Delete this record?')) return
+        const routeBySection = {
+          'exam-papers': '/api/exams/papers',
+          'exam-marks': '/api/exams/marks'
+        }
+        await api(`${routeBySection[moduleState.section]}/${row.id}`, { method: 'DELETE' })
+        await renderModule(moduleState.section)
+        showToast('Record deleted.')
+        return
+      }
+      if (role === 'admin' && ['exam-sessions', 'exam-schedules'].includes(moduleState.section) && action === 'delete') {
+        if (!confirm('Delete this record?')) return
+        const routeBySection = {
+          'exam-sessions': '/api/exams/sessions',
+          'exam-schedules': '/api/exams/schedules'
+        }
+        await api(`${routeBySection[moduleState.section]}/${row.id}`, { method: 'DELETE' })
+        await renderModule(moduleState.section)
+        showToast('Record deleted.')
+        return
+      }
+      showToast('Action not available for this module.')
+    }
+
+    function applyModuleView() {
+      const query = (moduleState.query || '').toLowerCase()
+      const visible = moduleState.rows.filter((row) => {
+        const passSearch = !query || JSON.stringify(row).toLowerCase().includes(query)
+        const passFilter = moduleState.filterKey === 'all' || String(row[moduleState.filterField]) === moduleState.filterKey
+        const passSemester = moduleState.semesterKey === 'all'
+          || String(row.semester || row.semesterId || row.semesterCode || row.semesterName || '').toLowerCase() === moduleState.semesterKey.toLowerCase()
+        const passDepartment = moduleState.departmentKey === 'all'
+          || String(row.department || row.departmentId || row.departmentCode || row.departmentName || '').toLowerCase() === moduleState.departmentKey.toLowerCase()
+        return passSearch && passFilter && passSemester && passDepartment
+      })
+      const head = el('moduleTableHead')
+      const body = el('moduleTableBody')
+      const role = normalizeRole(state.user.role)
+      const actions = rowActionsForSection(role, moduleState.section)
+      const bulkEnabled = supportsBulkSelection(role, moduleState.section)
+      const headerCheckbox = bulkEnabled ? '<th><input type="checkbox" id="selectAllRows" /></th>' : ''
+      head.innerHTML = headerCheckbox + moduleState.columns.map((c) => `<th>${c}</th>`).join('') + '<th>Actions</th>'
+      body.innerHTML = visible.map((row, idx) => {
+        const rowId = getRowId(moduleState.section, row)
+        const selected = rowId && moduleState.selectedIds.has(rowId)
+        const selector = bulkEnabled
+          ? `<td><input type="checkbox" data-select-id="${rowId ?? ''}" ${selected ? 'checked' : ''} /></td>`
+          : ''
+        const cols = moduleState.columns.map((c) => `<td>${row[c] ?? '-'}</td>`).join('')
+        const buttons = actions.map((act) => {
+          const cls = act === 'delete' || act === 'reject' ? 'delete' : ''
+          const label = act.charAt(0).toUpperCase() + act.slice(1)
+          return `<button class="${cls}" data-row="${idx}" data-act="${act}">${label}</button>`
+        }).join('')
+        return `<tr>${selector}${cols}<td class="row-actions">${buttons}</td></tr>`
+      }).join('')
+
+      if (bulkEnabled) {
+        const selectAll = document.getElementById('selectAllRows')
+        if (selectAll) {
+          const allVisibleSelected = visible.length > 0 && visible.every((row) => moduleState.selectedIds.has(getRowId(moduleState.section, row)))
+          selectAll.checked = allVisibleSelected
+          selectAll.addEventListener('change', () => {
+            if (selectAll.checked) {
+              visible.forEach((row) => {
+                const id = getRowId(moduleState.section, row)
+                if (id !== null && id !== undefined) moduleState.selectedIds.add(id)
+              })
+            } else {
+              visible.forEach((row) => {
+                const id = getRowId(moduleState.section, row)
+                if (id !== null && id !== undefined) moduleState.selectedIds.delete(id)
+              })
+            }
+            applyModuleView()
+          })
+        }
+        body.querySelectorAll('input[data-select-id]').forEach((checkbox) => {
+          checkbox.addEventListener('change', () => {
+            const id = Number(checkbox.dataset.selectId || 0)
+            if (!id) return
+            if (checkbox.checked) moduleState.selectedIds.add(id)
+            else moduleState.selectedIds.delete(id)
+            const countEl = document.getElementById('selectedCount')
+            if (countEl) countEl.textContent = String(moduleState.selectedIds.size)
+          })
+        })
+      }
+      body.querySelectorAll('button').forEach((btn) => btn.addEventListener('click', async () => {
+        const row = visible[Number(btn.dataset.row)]
+        try {
+          await handleRowAction(btn.dataset.act, row)
+        } catch (err) {
+          showToast(err.message)
+        }
+      }))
+
+      const summary = el('summaryGrid')
+      summary.innerHTML = `
+        <div class="summary-card"><small>Total Records</small><b>${moduleState.rows.length}</b></div>
+        <div class="summary-card"><small>Visible Records</small><b>${visible.length}</b></div>
+        <div class="summary-card"><small>Selected Records</small><b id="selectedCount">${bulkEnabled ? moduleState.selectedIds.size : 0}</b></div>
+      `
+    }
+
+    async function renderModule(section) {
+      const role = normalizeRole(state.user.role)
+      if (role === 'admin' && section === 'bulk-tools') {
+        el('moduleWorkspace').classList.add('hidden')
+        hideModuleForm()
+        el('adminChartsPanel').classList.add('hidden')
+        el('institutionSettingsPanel').classList.add('hidden')
+        el('bulkImportPanel').classList.remove('hidden')
+        renderBulkModuleOptions()
+        return
+      }
+      el('bulkImportPanel').classList.add('hidden')
+      const def = (MODULE_DEFS[role] || {})[section]
+      if (!def) {
+        el('moduleWorkspace').classList.add('hidden')
+        hideModuleForm()
+        return
+      }
+      el('moduleWorkspace').classList.remove('hidden')
+      hideModuleForm()
+      moduleState.section = section
+      moduleState.title = def.title
+      moduleState.filterField = def.filterBy
+      moduleState.query = ''
+      moduleState.filterKey = 'all'
+      moduleState.semesterKey = 'all'
+      moduleState.departmentKey = 'all'
+      moduleState.selectedIds = new Set()
+      el('moduleHead').textContent = def.title
+      const payload = await api(def.endpoint).catch(() => ({}))
+      moduleState.rows = toRows(payload)
+      moduleState.columns = def.columns.filter((c) => moduleState.rows.length === 0 || Object.prototype.hasOwnProperty.call(moduleState.rows[0], c))
+      if (moduleState.columns.length === 0) moduleState.columns = ['metric', 'value']
+
+      const filter = el('moduleFilter')
+      const values = [...new Set(moduleState.rows.map((r) => String(r[def.filterBy])).filter((v) => v && v !== 'undefined'))]
+      filter.innerHTML = ['<option value="all">All</option>', ...values.map((v) => `<option value="${v}">${v}</option>`)].join('')
+      filter.onchange = () => {
+        moduleState.filterKey = filter.value
+        applyModuleView()
+      }
+      const semesterFilter = el('semesterFilter')
+      const semesterValues = [...new Set(moduleState.rows.map((r) => String(r.semester || r.semesterId || r.semesterCode || r.semesterName || '')).filter((v) => v))]
+      semesterFilter.innerHTML = ['<option value="all">All Semesters</option>', ...semesterValues.map((v) => `<option value="${v}">${v}</option>`)].join('')
+      semesterFilter.onchange = () => {
+        moduleState.semesterKey = semesterFilter.value
+        applyModuleView()
+      }
+
+      const departmentFilter = el('departmentFilter')
+      const departmentValues = [...new Set(moduleState.rows.map((r) => String(r.department || r.departmentId || r.departmentCode || r.departmentName || '')).filter((v) => v))]
+      departmentFilter.innerHTML = ['<option value="all">All Departments</option>', ...departmentValues.map((v) => `<option value="${v}">${v}</option>`)].join('')
+      departmentFilter.onchange = () => {
+        moduleState.departmentKey = departmentFilter.value
+        applyModuleView()
+      }
+
+      el('moduleSearch').value = ''
+      const canAdd = (role === 'admin' && ['users', 'roles', 'academics', 'faculties', 'departments', 'programs', 'courses', 'yearsetup', 'enrollment', 'finance', 'messages', 'settings', 'gradeapprovals', 'exam-sessions', 'exam-schedules', 'exam-papers', 'exam-marks'].includes(section))
+        || (role === 'lecturer' && ['exam-papers', 'exam-marks'].includes(section))
+        || (role === 'student' && section === 'courses')
+      el('moduleAddBtn').classList.toggle('hidden', !canAdd)
+      const canBulkDelete = supportsBulkSelection(role, section)
+      el('moduleBulkDeleteBtn').classList.toggle('hidden', !canBulkDelete)
+      applyModuleView()
+
+      const showCharts = role === 'admin' && section === 'home'
+      el('adminChartsPanel').classList.toggle('hidden', !showCharts)
+      if (showCharts) {
+        const summary = await api('/api/admin/dashboard-summary').catch((err) => {
+          showToast(`Charts data failed: ${err.message}`)
+          return null
+        })
+        if (summary) renderAdminCharts(summary)
+      } else {
+        destroyAdminCharts()
+      }
+    }
+
+    function destroyAdminCharts() {
+      Object.keys(adminCharts).forEach((key) => {
+        if (adminCharts[key] && typeof adminCharts[key].destroy === 'function') adminCharts[key].destroy()
+        delete adminCharts[key]
+      })
+    }
+
+    function upsertChart(id, config) {
+      if (typeof Chart === 'undefined') return
+      if (adminCharts[id]) adminCharts[id].destroy()
+      const ctx = document.getElementById(id)
+      if (!ctx) return
+      adminCharts[id] = new Chart(ctx, config)
+    }
+
+    function renderAdminCharts(summary) {
+      if (typeof Chart === 'undefined') {
+        showToast('Chart library failed to load. Check internet/HTTPS for CDN access.')
+        return
+      }
+      const charts = summary?.charts || {}
+      const cards = summary?.cards || {}
+      const baseColors = ['#28f3ff', '#a3ff1f', '#ff4fd8', '#3c7bff', '#ffb020', '#ff4d6d']
+      const pie = (rows) => ({
+        labels: rows.map((r) => r.label),
+        datasets: [{ data: rows.map((r) => Number(r.value || 0)), backgroundColor: baseColors }]
+      })
+
+      const pieOptions = { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e6ecff' } } } }
+      upsertChart('studentsPieChart', { type: 'pie', data: pie(charts.studentGender || []), options: pieOptions })
+      upsertChart('feesPieChart', { type: 'pie', data: pie(charts.feesStatus || []), options: pieOptions })
+      upsertChart('attendancePieChart', { type: 'pie', data: pie(charts.attendance || []), options: pieOptions })
+      upsertChart('departmentBarChart', {
+        type: 'bar',
+        data: {
+          labels: (charts.studentsPerDepartment || []).map((r) => r.label),
+          datasets: [{ label: 'Students', data: (charts.studentsPerDepartment || []).map((r) => Number(r.value || 0)), backgroundColor: 'rgba(40,243,255,.6)' }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.08)' } }, x: { ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+      })
+      upsertChart('enrollmentLineChart', {
+        type: 'line',
+        data: {
+          labels: (charts.enrollmentTrend || []).map((r) => r.month),
+          datasets: [{ label: 'Enrollments', data: (charts.enrollmentTrend || []).map((r) => Number(r.value || 0)), borderColor: '#a3ff1f', backgroundColor: 'rgba(163,255,31,.15)', fill: true, tension: .25 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.08)' } }, x: { ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+      })
+      upsertChart('gradesBarChart', {
+        type: 'bar',
+        data: {
+          labels: (charts.gradeDistribution || []).map((r) => r.label),
+          datasets: [{ label: 'Count', data: (charts.gradeDistribution || []).map((r) => Number(r.value || 0)), backgroundColor: 'rgba(255,79,216,.6)' }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.08)' } }, x: { ticks: { color: '#a9b4d6' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+      })
+
+      const summaryEl = el('summaryGrid')
+      if (summaryEl && cards.totalStudents !== undefined) {
+        summaryEl.innerHTML = `
+          <div class="summary-card"><small>Total Students</small><b>${cards.totalStudents || 0}</b></div>
+          <div class="summary-card"><small>Total Staff</small><b>${cards.totalStaff || 0}</b></div>
+          <div class="summary-card"><small>Total Revenue</small><b>${cards.totalRevenue || 0}</b></div>
+        `
+      }
+    }
+
+    function toHumanText(data) {
+      if (typeof data === 'string') return data
+      if (Array.isArray(data)) return `Loaded ${data.length} record(s).`
+      if (!data || typeof data !== 'object') return 'Done.'
+      if (data.token && data.user) return `Login successful. Welcome ${data.user.name || data.user.email}.`
+      if (data.error) return data.error
+      if (data.ok === true) return 'Action completed successfully.'
+      if (data.id && (data.name || data.title || data.email)) return `${data.name || data.title || data.email} saved successfully.`
+      const keys = Object.keys(data)
+      if (!keys.length) return 'No data available.'
+      return `${keys[0]}: ${String(data[keys[0]]).slice(0, 60)}`
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+    }
+
+    function exportStyledPdfReport() {
+      const now = new Date()
+      const columns = moduleState.columns
+      const rows = moduleState.rows
+      const headHtml = columns.map((c) => `<th>${escapeHtml(c)}</th>`).join('')
+      const rowHtml = rows.map((row) => {
+        const tds = columns.map((c) => `<td>${escapeHtml(row[c] ?? '-')}</td>`).join('')
+        return `<tr>${tds}</tr>`
+      }).join('')
+
+      const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(moduleState.title)} Report</title>
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; color: #1d2f48; margin: 24px; }
+    .top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom: 2px solid #1f3554; padding-bottom:10px; }
+    .brand h1 { margin:0; font-size: 22px; color:#1f3554; }
+    .brand p { margin:2px 0 0; color:#52627a; }
+    .meta { text-align:right; font-size:12px; color:#52627a; }
+    .summary { margin:14px 0; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .card { border:1px solid #cfd8e5; border-radius:6px; padding:8px; background:#f7faff; }
+    .card b { display:block; font-size:18px; color:#1f3554; }
+    table { width:100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    th, td { border:1px solid #d8e0eb; padding:7px; text-align:left; }
+    th { background:#e9eff8; color:#1f3554; }
+    .sign { margin-top: 26px; display:flex; justify-content:space-between; }
+    .line { width:220px; border-top: 1px solid #314b6d; padding-top: 6px; font-size: 12px; color:#52627a; }
+    @media print { @page { size: A4; margin: 14mm; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <h1>Tech Hub University</h1>
+      <p>${escapeHtml(moduleState.title)} Report</p>
+    </div>
+    <div class="meta">
+      <div><b>Date:</b> ${escapeHtml(now.toLocaleDateString())}</div>
+      <div><b>Time:</b> ${escapeHtml(now.toLocaleTimeString())}</div>
+      <div><b>Total Rows:</b> ${escapeHtml(rows.length)}</div>
+    </div>
+  </div>
+  <div class="summary">
+    <div class="card"><small>Total Records</small><b>${escapeHtml(rows.length)}</b></div>
+    <div class="card"><small>Current Module</small><b>${escapeHtml(moduleState.title)}</b></div>
+    <div class="card"><small>Filters</small><b>${escapeHtml(`Semester: ${moduleState.semesterKey}, Department: ${moduleState.departmentKey}`)}</b></div>
+  </div>
+  <table>
+    <thead><tr>${headHtml}</tr></thead>
+    <tbody>${rowHtml || '<tr><td colspan="99">No records available</td></tr>'}</tbody>
+  </table>
+  <div class="sign">
+    <div class="line">Prepared by: __________________</div>
+    <div class="line">Approved by: __________________</div>
+  </div>
+</body>
+</html>`
+
+      const win = window.open('', '_blank')
+      if (!win) {
+        showToast('Popup blocked. Allow popups to export PDF.')
+        return
+      }
+      win.document.open()
+      win.document.write(html)
+      win.document.close()
+      win.focus()
+      setTimeout(() => win.print(), 300)
+    }
+
+    function showToast(data) {
+      const t = el('toast')
+      t.textContent = toHumanText(data)
+      t.style.display = 'block'
+      clearTimeout(window.__toastTimeout)
+      window.__toastTimeout = setTimeout(() => { t.style.display = 'none' }, 7000)
+    }
+
+    async function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) }
+      if (state.token) headers.Authorization = `Bearer ${state.token}`
+      const res = await fetch(baseUrl + path, { ...options, headers })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if (body && body.maintenance) {
+          applyMaintenanceMode({
+            maintenanceMode: true,
+            maintenanceMessage: body.error || 'Portal under maintenance.',
+            maintenanceEndsAt: body.endsAt || ''
+          })
+        }
+        if (res.status === 405) {
+          throw new Error('HTTP 405: Method blocked by HTTPS/proxy config. Route /api requests to backend and allow POST/PUT/PATCH/DELETE in Nginx.')
+        }
+        const err = new Error(body.error || `HTTP ${res.status}`)
+        err.details = body
+        throw err
+      }
+      return body
+    }
+
+    function normalizeRole(role) {
+      const raw = String(role || '').toLowerCase()
+      if (['super_admin', 'admin', 'registrar', 'hod'].includes(raw)) return 'admin'
+      if (['finance_officer', 'non_teaching_staff', 'staff'].includes(raw)) return 'staff'
+      if (raw === 'lecturer') return 'lecturer'
+      if (raw === 'alumni') return 'student'
+      return 'student'
+    }
+
+    async function withLecturerCourse(fn) {
+      const dashboard = await api('/api/lecturer/dashboard')
+      const rows = Array.isArray(dashboard) ? dashboard : (dashboard.courses || [])
+      const first = rows[0]
+      const courseId = first?.id
+      if (!courseId) throw new Error('No assigned course found for this lecturer.')
+      return fn(courseId)
+    }
+
+    async function withLecturerCourseAndStudent(fn) {
+      return withLecturerCourse(async (courseId) => {
+        const classList = await api(`/api/lecturer/class-list/${courseId}`)
+        const firstStudent = Array.isArray(classList) ? classList[0] : null
+        if (!firstStudent?.id) throw new Error('No students registered in this class yet.')
+        return fn(courseId, firstStudent.id)
+      })
+    }
+
+    function renderMenu() {
+      const role = normalizeRole(state.user.role)
+      const menu = MENU_BY_ROLE[role] || MENU_BY_ROLE.student
+      const menuEl = el('menu')
+      menuEl.innerHTML = menu.map((m) => `<button data-menu="${m.id}" class="${state.section === m.id ? 'active' : ''}">${m.label}<span>›</span></button>`).join('')
+      menuEl.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.menu
+          if (id === 'logout') return logout()
+          state.section = id
+          renderMenu()
+          renderTiles()
+          renderModule(id).catch((err) => showToast(err.message))
+        })
+      })
+    }
+
+    function renderTiles() {
+      const role = normalizeRole(state.user.role)
+      const section = state.section || 'home'
+      const all = TILES_BY_ROLE[role] || []
+      const rows = all.filter((t) => t.section === section || (section === 'home' && t.section === 'home'))
+      el('sectionTitle').textContent = section === 'home' ? ROLE_LABEL[role] : `${ROLE_LABEL[role]} - ${section}`
+
+      const tilesEl = el('tiles')
+      tilesEl.innerHTML = rows.map((r, i) => `<article class="tile" data-idx="${i}"><h4>${r.title}</h4><div class="icon">${r.icon}</div></article>`).join('')
+      tilesEl.querySelectorAll('.tile').forEach((tile) => {
+        tile.addEventListener('click', async () => {
+          try {
+            const idx = Number(tile.dataset.idx)
+            const selected = rows[idx]
+            if (selected.target && selected.target !== state.section) {
+              state.section = selected.target
+              renderMenu()
+              renderTiles()
+              await renderModule(state.section)
+            }
+            const out = await selected.run()
+            showToast(out)
+          } catch (err) {
+            showToast(err.message)
+          }
+        })
+      })
+
+      const showAdmin = role === 'admin' && ['home', 'users', 'profile', 'academics', 'settings'].includes(section)
+      el('adminWorkspace').classList.toggle('hidden', !showAdmin)
+      const showInstitutionPanel = role === 'admin' && section === 'settings'
+      el('institutionSettingsPanel').classList.toggle('hidden', !showInstitutionPanel)
+      if (showInstitutionPanel) {
+        loadInstitutionSettingsAdmin().catch((err) => showToast(err.message))
+      }
+    }
+
+    async function loadUsers() {
+      // Use the RBAC users endpoint to include assigned access role and permissions
+      const users = await api('/api/admin/rbac/users')
+      el('usersTableBody').innerHTML = users.map((u) =>
+        `<tr><td>${u.userId}</td><td>${u.name || '-'}</td><td>${u.baseRole || '-'}</td><td>${u.accessRole || '-'}</td><td>${(Array.isArray(u.permissions) ? u.permissions.join(', ') : '-')}</td><td>${u.userId === state.user.id ? '' : `<button class="alt" data-role="${u.userId}">Change Role</button><button class="danger" data-del="${u.userId}">Delete</button>`}</td></tr>`
+      ).join('')
+
+      el('usersTableBody').querySelectorAll('[data-role]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const userId = Number(btn.dataset.role)
+          const role = prompt('Enter access role (e.g. student, lecturer, admin, super_admin):')
+          if (!role) return
+          try {
+            await api(`/api/admin/rbac/users/${userId}/role`, { method: 'PATCH', body: JSON.stringify({ accessRole: role }) })
+            showToast('Role updated.')
+            await renderModule('users')
+            await loadUsers()
+          } catch (err) {
+            showToast(err.message)
+          }
+        })
+      })
+
+      el('usersTableBody').querySelectorAll('[data-del]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          try {
+            const out = await api(`/api/admin/users/${btn.dataset.del}`, { method: 'DELETE' })
+            showToast(out)
+            await renderModule('users')
+            await loadUsers()
+          } catch (err) {
+            showToast(err.message)
+          }
+        })
+      })
+    }
+
+    async function signIn() {
+      el('loginError').textContent = ''
+      try {
+        const data = await api('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: el('loginEmail').value, password: el('loginPassword').value })
+        })
+        state.token = data.token
+        state.user = data.user
+        state.section = 'home'
+
+        if (el('loginRemember')?.checked) {
+          localStorage.setItem('portalToken', state.token)
+        } else {
+          localStorage.removeItem('portalToken')
+        }
+
+        el('loginPage').classList.add('hidden')
+        el('portalPage').classList.remove('hidden')
+        const role = normalizeRole(data.user.role)
+        document.body.setAttribute('data-role', role)
+        el('portalTitle').textContent = `${ROLE_LABEL[role]} | Tech Hub`
+        el('rolePill').textContent = role === 'staff' ? 'non-teaching staff' : role
+
+        renderMenu()
+        renderTiles()
+        await renderModule('home')
+        if (role === 'admin') {
+          await loadUsers()
+        }
+        showToast(data)
+      } catch (err) {
+        el('loginError').textContent = err.message
+        if (err.details && err.details.verificationRequired && err.details.verificationId) {
+          showRegistrationEntry()
+          showVerificationStep({ id: err.details.verificationId, email: 'your email' })
+        }
+      }
+    }
+
+    async function loadSession() {
+      const stored = localStorage.getItem('portalToken')
+      if (!stored) return
+      state.token = stored
+      try {
+        const me = await api('/api/auth/me')
+        state.user = me
+        state.section = 'home'
+        if (maintenanceState.enabled && normalizeRole(me.role) !== 'admin') {
+          logout()
+          showToast('Portal under maintenance. Please try later.')
+          return
+        }
+        el('loginPage').classList.add('hidden')
+        el('portalPage').classList.remove('hidden')
+        const role = normalizeRole(me.role)
+        document.body.setAttribute('data-role', role)
+        el('portalTitle').textContent = `${ROLE_LABEL[role]} | Tech Hub`
+        el('rolePill').textContent = role === 'staff' ? 'non-teaching staff' : role
+        renderMenu()
+        renderTiles()
+        await renderModule('home')
+        if (role === 'admin') await loadUsers()
+      } catch (_) {
+        localStorage.removeItem('portalToken')
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const pw = el('loginPassword')
+      const btn = el('togglePasswordBtn')
+      if (!pw) return
+      const isHidden = pw.type === 'password'
+      pw.type = isHidden ? 'text' : 'password'
+      if (btn) btn.textContent = isHidden ? 'Hide' : 'Show'
+    }
+
+    async function forgotPassword() {
+      const email = prompt('Enter your email to receive reset instructions:')
+      if (!email) return
+      try {
+        const resp = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
+        showToast(`Reset token: ${resp.token}. Use it to reset password within 1 hour.`)
+      } catch (err) {
+        showToast(err.message)
+      }
+    }
+
+    async function resetPasswordFlow() {
+      const token = prompt('Enter the reset token you received:')
+      if (!token) return
+      const newPassword = prompt('Enter your new password (min 8 chars):')
+      if (!newPassword) return
+      try {
+        await api('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) })
+        showToast('Password reset successful. Please sign in.')
+      } catch (err) {
+        showToast(err.message)
+      }
+    }
+
+    function showLoginView() {
+      el('loginPage').classList.remove('hidden')
+      el('loginFormPanel').classList.remove('hidden')
+      el('registrationFlow').classList.add('hidden')
+      showLoginFields()
+      el('loginError').textContent = ''
+      el('regVerifyError').textContent = ''
+      el('regCreateError').textContent = ''
+      el('verifyError').textContent = ''
+      el('verifyHint').textContent = ''
+      el('regVerifyFailActions').classList.add('hidden')
+      el('regDuplicateActions').classList.add('hidden')
+    }
+
+    function hideLoginFields() {
+      el('loginFormFields').classList.add('hidden')
+    }
+
+    function showLoginFields() {
+      el('loginFormFields').classList.remove('hidden')
+    }
+
+    function showRegistrationEntry() {
+      if (maintenanceState.enabled) {
+        showToast('Registration is disabled during maintenance.')
+        return
+      }
+      el('loginPage').classList.remove('hidden')
+      el('loginFormPanel').classList.add('hidden')
+      el('registrationFlow').classList.remove('hidden')
+      hideLoginFields()
+      el('registerStep1').classList.remove('hidden')
+      el('registerStep2').classList.add('hidden')
+      el('registerStep3').classList.add('hidden')
+      el('registerStep4').classList.add('hidden')
+      el('regRegNumber').value = ''
+      el('regRole').value = 'student'
+      el('regDob').value = ''
+      el('regVerifyError').textContent = ''
+      el('regCreateError').textContent = ''
+      el('verifyError').textContent = ''
+      el('verifyHint').textContent = ''
+      el('regVerifyFailActions').classList.add('hidden')
+      el('regDuplicateActions').classList.add('hidden')
+      el('regName').value = ''
+      el('regNumber').value = ''
+      el('regProgram').value = ''
+      el('regDepartment').value = ''
+      el('regEmail').value = ''
+      el('regPhone').value = ''
+      el('regPassword').value = ''
+      el('regPasswordConfirm').value = ''
+      el('verifyEmailToken').value = ''
+      el('verifyOtp').value = ''
+      registrationState.verificationId = null
+      registrationState.email = ''
+      registrationState.emailToken = ''
+      registrationState.otp = ''
+    }
+
+    function validatePasswordStrength(password) {
+      if (!password || password.length < 8) return false
+      if (!/[0-9]/.test(password)) return false
+      if (!/[A-Z]/.test(password)) return false
+      if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return false
+      return true
+    }
+
+    async function verifyRegistration() {
+      const regNumber = el('regRegNumber').value.trim()
+      const role = el('regRole').value
+      const dob = el('regDob').value
+      el('regVerifyError').textContent = ''
+      el('regVerifyFailActions').classList.add('hidden')
+      if (!regNumber) {
+        el('regVerifyError').textContent = 'Enter a registration/staff number.'
+        return
+      }
+      try {
+        const res = await api('/api/auth/verify-registration', {
+          method: 'POST',
+          body: JSON.stringify({ regNumber, role, dob })
+        })
+        el('registerStep1').classList.add('hidden')
+        el('registerStep2').classList.remove('hidden')
+        el('regName').value = res.record.name || ''
+        el('regNumber').value = res.record.regNumber || ''
+        el('regProgram').value = res.record.program || res.record.department || ''
+        el('regDepartment').value = res.record.department || ''
+        el('regEmail').value = res.record.email || ''
+        el('regPhone').value = ''
+      } catch (err) {
+        el('regVerifyError').textContent = err.message
+        el('regVerifyFailActions').classList.remove('hidden')
+      }
+    }
+
+    async function createAccountFromRegistration() {
+      const regNumber = el('regNumber').value.trim()
+      const role = el('regRole').value
+      const name = el('regName').value.trim()
+      const email = el('regEmail').value.trim()
+      const phone = el('regPhone').value.trim()
+      const password = el('regPassword').value
+      const confirm = el('regPasswordConfirm').value
+      el('regCreateError').textContent = ''
+      el('regDuplicateActions').classList.add('hidden')
+      if (!email || !password) {
+        el('regCreateError').textContent = 'Email and password are required.'
+        return
+      }
+      if (password !== confirm) {
+        el('regCreateError').textContent = 'Passwords do not match.'
+        return
+      }
+      if (!validatePasswordStrength(password)) {
+        el('regCreateError').textContent = 'Password must be 8+ chars and include a number, uppercase, and symbol.'
+        return
+      }
+      try {
+        const out = await api('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            email,
+            password,
+            confirmPassword: confirm,
+            name,
+            role,
+            personNumber: regNumber,
+            phone
+          })
+        })
+        if (out && out.verification) {
+          showVerificationStep(out.verification)
+          return
+        }
+        showToast('Registration saved. Please verify your account to continue.')
+      } catch (err) {
+        el('regCreateError').textContent = err.message
+        if (String(err.message || '').toLowerCase().includes('account already exists')) {
+          el('regDuplicateActions').classList.remove('hidden')
+        }
+      }
+    }
+
+    function showVerificationStep(verification) {
+      registrationState.verificationId = verification.id
+      registrationState.email = verification.email || ''
+      registrationState.emailToken = verification.emailToken || ''
+      registrationState.otp = verification.otp || ''
+      el('registerStep1').classList.add('hidden')
+      el('registerStep2').classList.add('hidden')
+      el('registerStep3').classList.remove('hidden')
+      el('registerStep4').classList.add('hidden')
+      el('verifyEmailDisplay').textContent = verification.email || 'your email'
+      el('verifyEmailToken').value = verification.emailToken || ''
+      el('verifyOtp').value = verification.otp || ''
+      if (verification.emailToken || verification.otp) {
+        el('verifyHint').textContent = `Demo codes: Email Token ${verification.emailToken || '-'} | OTP ${verification.otp || '-'}`
+      } else {
+        el('verifyHint').textContent = ''
+      }
+      el('verifyError').textContent = ''
+    }
+
+    function showSuccessStep() {
+      el('registerStep1').classList.add('hidden')
+      el('registerStep2').classList.add('hidden')
+      el('registerStep3').classList.add('hidden')
+      el('registerStep4').classList.remove('hidden')
+    }
+
+    async function verifyEmailToken() {
+      if (!registrationState.verificationId) {
+        el('verifyError').textContent = 'Missing verification session. Please register again.'
+        return
+      }
+      el('verifyError').textContent = ''
+      try {
+        await api('/api/auth/verify-email', {
+          method: 'POST',
+          body: JSON.stringify({ verificationId: registrationState.verificationId, token: el('verifyEmailToken').value.trim() })
+        })
+        showSuccessStep()
+      } catch (err) {
+        el('verifyError').textContent = err.message
+      }
+    }
+
+    async function verifyOtpCode() {
+      if (!registrationState.verificationId) {
+        el('verifyError').textContent = 'Missing verification session. Please register again.'
+        return
+      }
+      el('verifyError').textContent = ''
+      try {
+        await api('/api/auth/verify-otp', {
+          method: 'POST',
+          body: JSON.stringify({ verificationId: registrationState.verificationId, otp: el('verifyOtp').value.trim() })
+        })
+        showSuccessStep()
+      } catch (err) {
+        el('verifyError').textContent = err.message
+      }
+    }
+
+    async function resendVerification(channel) {
+      if (!registrationState.verificationId) {
+        el('verifyError').textContent = 'Missing verification session. Please register again.'
+        return
+      }
+      el('verifyError').textContent = ''
+      try {
+        const out = await api('/api/auth/resend-verification', {
+          method: 'POST',
+          body: JSON.stringify({ verificationId: registrationState.verificationId, channel })
+        })
+        if (out && out.verification) {
+          showVerificationStep(out.verification)
+          showToast('Verification resent.')
+        }
+      } catch (err) {
+        el('verifyError').textContent = err.message
+      }
+    }
+
+    async function registerApplicant() {
+      const name = prompt('Full name:')
+      if (!name) return
+      const email = prompt('Email:')
+      if (!email) return
+      const program = prompt('Program code (e.g., BSC-CS):', 'BSC-CS')
+      if (!program) return
+      const phone = prompt('Phone (optional):', '')
+      try {
+        const res = await api('/api/admissions', { method: 'POST', body: JSON.stringify({ name, email, phone, programCode: program }) })
+        showToast('Application submitted. We will get back to you soon.')
+      } catch (err) {
+        showToast(err.message)
+      }
+    }
+
+    function openHelp() {
+      showToast('Need help? Contact support@techhub.edu or open a ticket via the support portal.')
+    }
+
+    function logout() {
+      if (moduleState.autoTimer) {
+        clearInterval(moduleState.autoTimer)
+        moduleState.autoTimer = null
+      }
+      moduleState.autoRefresh = false
+      el('moduleAutoRefreshBtn').textContent = 'Auto: Off'
+      state.token = null
+      state.user = null
+      state.section = 'home'
+      destroyAdminCharts()
+      document.body.removeAttribute('data-role')
+      el('portalPage').classList.add('hidden')
+      showLoginView()
+      showToast('Logged out')
+    }
+
+    async function createUser() {
+      const payload = {
+        name: el('newUserName').value,
+        email: el('newUserEmail').value,
+        password: el('newUserPassword').value,
+        role: el('newUserRole').value
+      }
+      const out = await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) })
+      showToast(out)
+      el('newUserName').value = ''
+      el('newUserEmail').value = ''
+      await loadUsers()
+    }
+
+    function startCountdown() {
+      startCountdown('2026-03-02T23:59:00')
+    }
+
+    function startCountdown(targetIso) {
+      if (countdownTimer) {
+        clearInterval(countdownTimer)
+        countdownTimer = null
+      }
+      const deadline = new Date(targetIso)
+      if (Number.isNaN(deadline.getTime())) {
+        document.querySelector('.notice')?.classList.add('hidden')
+        return
+      }
+      const run = () => {
+        const diff = Math.max(0, deadline - Date.now())
+        const d = Math.floor(diff / 86400000)
+        const h = Math.floor((diff % 86400000) / 3600000)
+        const m = Math.floor((diff % 3600000) / 60000)
+        const s = Math.floor((diff % 60000) / 1000)
+        el('countdown').textContent = `${d}d ${h}h ${m}m ${s}s`
+      }
+      run()
+      countdownTimer = setInterval(run, 1000)
+    }
+
+    el('signinBtn').addEventListener('click', signIn)
+    el('togglePasswordBtn').addEventListener('click', togglePasswordVisibility)
+    el('forgotBtn').addEventListener('click', forgotPassword)
+    el('registerBtn').addEventListener('click', showRegistrationEntry)
+    el('regVerifyBtn').addEventListener('click', verifyRegistration)
+    el('regClearBtn').addEventListener('click', showRegistrationEntry)
+    el('regBackBtn').addEventListener('click', showLoginView)
+    el('regCancelBtn').addEventListener('click', showLoginView)
+    el('regCreateBtn').addEventListener('click', createAccountFromRegistration)
+    el('regTryAgainBtn').addEventListener('click', showRegistrationEntry)
+    el('regContactBtn').addEventListener('click', openHelp)
+    el('regLoginBtn').addEventListener('click', showLoginView)
+    el('regResetBtn').addEventListener('click', resetPasswordFlow)
+    el('verifyEmailBtn').addEventListener('click', verifyEmailToken)
+    el('resendEmailBtn').addEventListener('click', () => resendVerification('email'))
+    el('verifyOtpBtn').addEventListener('click', verifyOtpCode)
+    el('resendOtpBtn').addEventListener('click', () => resendVerification('otp'))
+    el('regAgainBtn').addEventListener('click', showRegistrationEntry)
+    el('regBackToLoginBtn').addEventListener('click', showLoginView)
+    el('regGoLoginBtn').addEventListener('click', showLoginView)
+    el('regAgainBtn2').addEventListener('click', showRegistrationEntry)
+    el('helpBtn').addEventListener('click', openHelp)
+    el('createUserBtn').addEventListener('click', async () => {
+      try { await createUser() } catch (err) { showToast(err.message) }
+    })
+    el('refreshUsersBtn').addEventListener('click', async () => {
+      try { await loadUsers() } catch (err) { showToast(err.message) }
+    })
+    el('createDeptBtn').addEventListener('click', async () => {
+      try {
+        const payload = {
+          name: el('deptName').value.trim(),
+          code: el('deptCode').value.trim()
+        }
+        if (!payload.name || !payload.code) return showToast('Enter department name and code.')
+        await api('/api/admin/departments', { method: 'POST', body: JSON.stringify(payload) })
+        showToast('Department created successfully.')
+        el('deptName').value = ''
+        el('deptCode').value = ''
+        await renderModule(state.section)
+      } catch (err) { showToast(err.message) }
+    })
+    el('createSemesterBtn').addEventListener('click', async () => {
+      try {
+        const payload = {
+          name: el('semesterName').value.trim(),
+          code: el('semesterCode').value.trim(),
+          startDate: el('semesterStartDate').value,
+          endDate: el('semesterEndDate').value
+        }
+        if (!payload.name || !payload.code || !payload.startDate || !payload.endDate) return showToast('Complete all semester fields.')
+        await api('/api/admin/semesters', { method: 'POST', body: JSON.stringify(payload) })
+        showToast('Semester created successfully.')
+        await renderModule(state.section)
+      } catch (err) { showToast(err.message) }
+    })
+    el('moduleSearch').addEventListener('input', (e) => {
+      moduleState.query = e.target.value
+      applyModuleView()
+    })
+    el('moduleRefreshBtn').addEventListener('click', async () => {
+      try {
+        await renderModule(moduleState.section || state.section || 'home')
+        showToast('Module refreshed')
+      } catch (err) { showToast(err.message) }
+    })
+    el('moduleAddBtn').addEventListener('click', async () => {
+      try {
+        const role = normalizeRole(state.user.role)
+        const sec = moduleState.section
+        if (role === 'admin' && sec === 'academics') return showToast('Choose a specific module: Faculties, Departments, Programs, Courses, or Academic Year & Semester.')
+        if (role === 'admin' || (role === 'student' && sec === 'courses') || (role === 'lecturer' && ['exam-papers', 'exam-marks'].includes(sec))) {
+          openModuleForm('create', sec)
+          return
+        }
+        showToast('Add action is not available for this module.')
+      } catch (err) { showToast(err.message) }
+    })
+    el('moduleExportPdfBtn').addEventListener('click', () => {
+      exportStyledPdfReport()
+      showToast(`Styled report opened for ${moduleState.rows.length} record(s).`)
+    })
+    el('moduleExportExcelBtn').addEventListener('click', () => {
+      showToast(`Excel export prepared for ${moduleState.rows.length} record(s).`)
+    })
+    el('moduleBulkDeleteBtn').addEventListener('click', async () => {
+      try {
+        const ids = Array.from(moduleState.selectedIds)
+        if (!ids.length) return showToast('Select at least one record to delete.')
+        if (!confirm(`Delete ${ids.length} selected record(s)? This action cannot be undone.`)) return
+        const payload = { module: moduleState.section, ids }
+        await api('/api/admin/bulk-delete', { method: 'POST', body: JSON.stringify(payload) })
+        moduleState.selectedIds = new Set()
+        await renderModule(moduleState.section)
+        showToast('Selected records deleted.')
+      } catch (err) { showToast(err.message) }
+    })
+    el('moduleAutoRefreshBtn').addEventListener('click', () => {
+      moduleState.autoRefresh = !moduleState.autoRefresh
+      el('moduleAutoRefreshBtn').textContent = moduleState.autoRefresh ? 'Auto: On' : 'Auto: Off'
+      if (moduleState.autoTimer) {
+        clearInterval(moduleState.autoTimer)
+        moduleState.autoTimer = null
+      }
+      if (moduleState.autoRefresh) {
+        moduleState.autoTimer = setInterval(async () => {
+          try {
+            await renderModule(moduleState.section || state.section || 'home')
+          } catch (_) {}
+        }, 10000)
+      }
+      showToast(moduleState.autoRefresh ? 'Auto-refresh enabled (10s).' : 'Auto-refresh disabled.')
+    })
+    el('moduleFormSaveBtn').addEventListener('click', async () => {
+      try {
+        await submitModuleForm()
+      } catch (err) {
+        showToast(err.message)
+      }
+    })
+    el('moduleFormCancelBtn').addEventListener('click', () => hideModuleForm())
+    ;[
+      'instName', 'instShortName', 'instMotto', 'instYear', 'instRegNo', 'instEmail', 'instPhone', 'instAltPhone',
+      'instWebsite', 'instCountry', 'instCounty', 'instCity', 'instAddress', 'instPoBox', 'instPostalCode',
+      'instMainLogo', 'instFavicon', 'instSeal', 'instPrimaryColor', 'instSecondaryColor', 'instCampuses',
+      'instRegCountdownEnabled', 'instRegCountdownTarget', 'instRegCountdownLabel', 'instRegCountdownMessage',
+      'instMaintenanceMode', 'instMaintenanceMessage', 'instMaintenanceEndsAt'
+    ].forEach((id) => el(id).addEventListener('input', renderInstitutionPreview))
+    bindFileToInput('instMainLogoFile', 'instMainLogo')
+    bindFileToInput('instFaviconFile', 'instFavicon')
+    bindFileToInput('instSealFile', 'instSeal')
+    el('instSaveBtn').addEventListener('click', async () => {
+      try {
+        const payload = collectInstitutionPayload()
+        const out = await api('/api/admin/institution-settings', { method: 'PUT', body: JSON.stringify(payload) })
+        applyInstitutionBranding(out)
+        showToast('Institution settings saved and applied across portal.')
+        await loadInstitutionSettingsAdmin()
+      } catch (err) { showToast(err.message) }
+    })
+    el('instRestoreHistoryBtn').addEventListener('click', async () => {
+      try {
+        const version = Number(el('instHistorySelect').value)
+        const out = await api('/api/admin/institution-settings/restore', { method: 'POST', body: JSON.stringify({ version }) })
+        applyInstitutionBranding(out)
+        showToast(`Restored settings version ${out.restoredVersion || version}.`)
+        await loadInstitutionSettingsAdmin()
+      } catch (err) { showToast(err.message) }
+    })
+    el('instRestoreDefaultBtn').addEventListener('click', async () => {
+      try {
+        const out = await api('/api/admin/institution-settings/restore-default', { method: 'POST', body: JSON.stringify({}) })
+        applyInstitutionBranding(out)
+        showToast('Default institution settings restored.')
+        await loadInstitutionSettingsAdmin()
+      } catch (err) { showToast(err.message) }
+    })
+    el('instExportBackupBtn').addEventListener('click', () => {
+      const payload = collectInstitutionPayload()
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = `institution_settings_backup_${new Date().toISOString().slice(0, 10)}.json`
+      link.click()
+      URL.revokeObjectURL(link.href)
+      showToast('Institution settings backup exported.')
+    })
+    el('instDownloadProfileBtn').addEventListener('click', () => {
+      const p = collectInstitutionPayload()
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>Institution Profile</title><style>
+      body{font-family:Segoe UI,Arial,sans-serif;margin:24px;color:#1d2f48}
+      .h{border-bottom:2px solid ${p.primaryColor || '#1f3554'};padding-bottom:8px;display:flex;gap:12px;align-items:center}
+      img{width:72px;height:72px;object-fit:contain;border:1px solid #d0d8e2;border-radius:8px}
+      table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #dce3ec;padding:8px;text-align:left}
+      th{background:#eef3f9}
+      </style></head><body>
+      <div class="h"><img src="${escapeHtml(p.mainLogo)}"><div><h2 style="margin:0">${escapeHtml(p.institutionName)}</h2><div>${escapeHtml(p.motto)}</div></div></div>
+      <table><tbody>
+      <tr><th>Short Name</th><td>${escapeHtml(p.shortName)}</td></tr>
+      <tr><th>Registration Number</th><td>${escapeHtml(p.registrationNumber)}</td></tr>
+      <tr><th>Established</th><td>${escapeHtml(p.yearEstablished)}</td></tr>
+      <tr><th>Email</th><td>${escapeHtml(p.email)}</td></tr>
+      <tr><th>Phone</th><td>${escapeHtml(p.phone)} / ${escapeHtml(p.alternativePhone)}</td></tr>
+      <tr><th>Website</th><td>${escapeHtml(p.websiteUrl)}</td></tr>
+      <tr><th>Location</th><td>${escapeHtml(`${p.country}, ${p.countyState}, ${p.cityTown}`)}</td></tr>
+      <tr><th>Address</th><td>${escapeHtml(`${p.physicalAddress}, P.O. Box ${p.poBox} ${p.postalCode}`)}</td></tr>
+      </tbody></table></body></html>`
+      const win = window.open('', '_blank')
+      if (!win) return showToast('Popup blocked. Allow popups to export PDF.')
+      win.document.open(); win.document.write(html); win.document.close(); win.focus(); setTimeout(() => win.print(), 300)
+    })
+    el('lmsOpenBtn').addEventListener('click', async () => {
+      try {
+        const out = await openLmsLink()
+        showToast(out)
+      } catch (err) { showToast(err.message) }
+    })
+    el('lmsRefreshBtn').addEventListener('click', async () => {
+      try {
+        await loadLmsIntegrationsPreview()
+        showToast('LMS integrations refreshed.')
+      } catch (err) { showToast(err.message) }
+    })
+    el('bulkParseBtn').addEventListener('click', async () => {
+      try { await parseBulkInput() } catch (err) { showToast(err.message) }
+    })
+    el('bulkImportBtn').addEventListener('click', async () => {
+      try { await importBulkRows() } catch (err) { showToast(err.message) }
+    })
+    el('bulkClearBtn').addEventListener('click', () => {
+      bulkState.rows = []
+      bulkState.parsed = false
+      el('bulkPasteArea').value = ''
+      el('bulkFileInput').value = ''
+      renderBulkPreview()
+      showToast('Bulk import form cleared.')
+    })
+    el('bulkFileInput').addEventListener('change', async () => {
+      try { await parseBulkInput() } catch (err) { showToast(err.message) }
+    })
+
+    loadSession().catch(() => {})
+    fetchPublicInstitutionSettings()
+
+    startCountdown(state.institution?.registrationCountdownTarget || '2026-03-31T23:59:00')
+  </script>
+</body>
+</html>
