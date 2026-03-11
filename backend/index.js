@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const nodemailer = require('nodemailer')
 const fs = require('fs')
 const path = require('path')
 const { PrismaClient } = require('@prisma/client')
@@ -12,7 +13,6 @@ const PORT = Number(process.env.PORT || 4000)
 const NODE_ENV = process.env.NODE_ENV || 'development'
 const IS_PROD = NODE_ENV === 'production'
 const TRUST_PROXY = process.env.TRUST_PROXY === 'true'
-const VERIFICATION_MODE = process.env.VERIFICATION_MODE || (IS_PROD ? 'email' : 'mock')
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map((value) => value.trim())
@@ -29,6 +29,16 @@ const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 
 const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX || 300)
 const STORAGE_ENGINE = process.env.STORAGE_ENGINE || 'json'
 const prisma = STORAGE_ENGINE === 'prisma' ? new PrismaClient() : null
+
+const EMAIL_HOST = process.env.EMAIL_HOST || process.env.SMTP_HOST || ''
+const EMAIL_PORT = Number(process.env.EMAIL_PORT || process.env.SMTP_PORT || 587)
+const EMAIL_SECURE = String(process.env.EMAIL_SECURE || process.env.SMTP_SECURE || 'false').toLowerCase() === 'true'
+const EMAIL_USER = process.env.EMAIL_USER || process.env.SMTP_USER || ''
+const EMAIL_PASS = process.env.EMAIL_PASS || process.env.SMTP_PASS || ''
+const EMAIL_FROM = process.env.EMAIL_FROM || EMAIL_USER || ''
+const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || EMAIL_FROM || ''
+const EMAIL_ENABLED = Boolean(EMAIL_HOST && EMAIL_PORT && EMAIL_USER && EMAIL_PASS && EMAIL_FROM)
+let mailer = null
 
 const DEFAULT_JWT_SECRET = 'replace-with-a-long-random-secret'
 if (IS_PROD && (SECRET === 'dev-secret' || SECRET === DEFAULT_JWT_SECRET || (SECRET || '').length < 32)) {
@@ -1524,7 +1534,7 @@ app.patch('/api/admin/rbac/users/:id/role', auth, requireRole(['admin', 'super_a
   return res.status(404).json({ error: 'User not found' })
 })
 
-app.post('/api/admin/bulk-import', auth, requireRole(['admin']), (req, res) => {
+app.post('/api/admin/bulk-import', auth, requireRole(['admin']), async (req, res) => {
   if (STORAGE_ENGINE === 'prisma') {
     return res.status(501).json({ error: 'Bulk import not enabled for Prisma storage yet.' })
   }
@@ -1535,13 +1545,16 @@ app.post('/api/admin/bulk-import', auth, requireRole(['admin']), (req, res) => {
 
   const config = bulkModuleConfigs()[moduleKey]
   if (!config) return res.status(400).json({ error: 'Unsupported import module' })
+  if (moduleKey === 'users' && !EMAIL_ENABLED) {
+    return res.status(400).json({ error: 'Email transport not configured. Configure SMTP before importing users.' })
+  }
   const collection = config.collection
   if (!Array.isArray(store[collection])) store[collection] = []
 
-  const result = { imported: 0, skipped: 0, errors: [], credentials: [] }
+  const result = { imported: 0, skipped: 0, errors: [] }
   const uniqueFields = config.uniqueBy || []
 
-  rows.forEach((raw, idx) => {
+  for (const [idx, raw] of rows.entries()) {
     try {
       const normalized = normalizeBulkRow(raw, config.fields)
       const payload = {}
@@ -1582,9 +1595,14 @@ app.post('/api/admin/bulk-import', auth, requireRole(['admin']), (req, res) => {
           phone: payload.phone || '',
           mustChangePassword: true
         })
-        result.credentials.push({ email: user.email, username, temporaryPassword: tempPassword })
+        try {
+          await sendTemporaryPasswordEmail(user.email, username, tempPassword)
+        } catch (error) {
+          console.error('bulk user email failed', error)
+          result.errors.push({ row: idx + 1, error: 'Failed to send credentials email' })
+        }
         result.imported += 1
-        return
+        continue
       }
 
       if (moduleKey === 'exam-schedules') {
@@ -1627,7 +1645,7 @@ app.post('/api/admin/bulk-import', auth, requireRole(['admin']), (req, res) => {
     } catch (error) {
       result.errors.push({ row: idx + 1, error: error.message })
     }
-  })
+  }
 
   saveStore()
   logActivity(req.user.id, 'admin.bulk-import', { module: moduleKey, imported: result.imported, skipped: result.skipped })
@@ -1982,15 +2000,20 @@ app.patch('/api/admin/registrations/:id/reset', auth, requireRole(['admin']), (r
   if (!record) return res.status(404).json({ error: 'Registration not found' })
   const refreshed = createOrRefreshVerification(record.userId, record.email || '')
   logRegistrationEvent('admin.reset', { userId: record.userId })
-  res.json({
-    ok: true,
-    verification: {
-      id: refreshed.id,
-      email: maskEmail(refreshed.email),
-      channels: ['email', 'otp'],
-      ...(IS_PROD ? {} : { emailToken: refreshed.emailToken, otp: refreshed.otp })
-    }
-  })
+  sendVerificationEmail(refreshed.email, refreshed.emailToken, refreshed.emailExpiresAt)
+    .then(() => sendVerificationOtp(refreshed.email, refreshed.otp, refreshed.otpExpiresAt))
+    .then(() => res.json({
+      ok: true,
+      verification: {
+        id: refreshed.id,
+        email: maskEmail(refreshed.email),
+        channels: ['email', 'otp']
+      }
+    }))
+    .catch((error) => {
+      console.error('verification email send failed', error)
+      res.status(500).json({ error: 'Failed to send verification. Check email configuration and try again.' })
+    })
 })
 
 async function findRegistryRecord(regNumber, role) {
@@ -2030,6 +2053,121 @@ function maskEmail(email) {
   const head = name.slice(0, 2)
   const tail = name.length > 2 ? name.slice(-1) : ''
   return `${head}${'*'.repeat(Math.max(0, name.length - 3))}${tail}@${domain}`
+}
+
+function getMailer() {
+  if (!EMAIL_ENABLED) return null
+  if (!mailer) {
+    mailer = nodemailer.createTransport({
+      host: EMAIL_HOST,
+      port: EMAIL_PORT,
+      secure: EMAIL_SECURE,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS }
+    })
+  }
+  return mailer
+}
+
+async function sendEmail({ to, subject, text, html }) {
+  const transporter = getMailer()
+  if (!transporter) throw new Error('Email transport not configured')
+  if (!to) throw new Error('Recipient email is missing')
+  return transporter.sendMail({
+    from: EMAIL_FROM,
+    replyTo: EMAIL_REPLY_TO || undefined,
+    to,
+    subject,
+    text,
+    html
+  })
+}
+
+async function sendVerificationEmail(toEmail, token, expiresAt) {
+  const subject = 'Verify your portal account'
+  const text = [
+    'Use the verification token below to activate your portal account.',
+    `Token: ${token}`,
+    `Expires: ${expiresAt}`,
+    'If you did not request this, please ignore this email.'
+  ].join('\n')
+  const html = `
+    <p>Use the verification token below to activate your portal account.</p>
+    <p><b>Token:</b> ${token}</p>
+    <p><b>Expires:</b> ${expiresAt}</p>
+    <p>If you did not request this, please ignore this email.</p>
+  `
+  await sendEmail({ to: toEmail, subject, text, html })
+}
+
+async function sendVerificationOtp(toEmail, otp, expiresAt) {
+  const subject = 'Your portal OTP code'
+  const text = [
+    'Use the OTP code below to verify your portal account.',
+    `OTP: ${otp}`,
+    `Expires: ${expiresAt}`,
+    'If you did not request this, please ignore this email.'
+  ].join('\n')
+  const html = `
+    <p>Use the OTP code below to verify your portal account.</p>
+    <p><b>OTP:</b> ${otp}</p>
+    <p><b>Expires:</b> ${expiresAt}</p>
+    <p>If you did not request this, please ignore this email.</p>
+  `
+  await sendEmail({ to: toEmail, subject, text, html })
+}
+
+async function sendPasswordResetEmail(toEmail, token, expiresAt) {
+  const subject = 'Reset your portal password'
+  const text = [
+    'Use the reset token below to change your password.',
+    `Token: ${token}`,
+    `Expires: ${expiresAt.toISOString()}`,
+    'If you did not request this, please ignore this email.'
+  ].join('\n')
+  const html = `
+    <p>Use the reset token below to change your password.</p>
+    <p><b>Token:</b> ${token}</p>
+    <p><b>Expires:</b> ${expiresAt.toISOString()}</p>
+    <p>If you did not request this, please ignore this email.</p>
+  `
+  await sendEmail({ to: toEmail, subject, text, html })
+}
+
+async function sendTemporaryPasswordEmail(toEmail, username, tempPassword) {
+  const subject = 'Your portal account credentials'
+  const text = [
+    'Your portal account has been created or reset.',
+    `Username: ${username || toEmail}`,
+    `Temporary password: ${tempPassword}`,
+    'Please change your password after logging in.'
+  ].join('\n')
+  const html = `
+    <p>Your portal account has been created or reset.</p>
+    <p><b>Username:</b> ${username || toEmail}</p>
+    <p><b>Temporary password:</b> ${tempPassword}</p>
+    <p>Please change your password after logging in.</p>
+  `
+  await sendEmail({ to: toEmail, subject, text, html })
+}
+
+async function resolveNotificationRecipients(audience, toUserId) {
+  if (audience === 'all') {
+    if (STORAGE_ENGINE === 'prisma' && prisma) {
+      return prisma.user.findMany({ select: { id: true, email: true } })
+    }
+    return (store.users || []).map((u) => ({ id: u.id, email: u.email }))
+  }
+  const user = await findUserById(toUserId)
+  return user ? [{ id: user.id, email: user.email }] : []
+}
+
+async function sendNotificationEmail({ audience, toUserId, message }) {
+  const recipients = await resolveNotificationRecipients(audience, toUserId)
+  const subject = 'Portal Notification'
+  const tasks = recipients
+    .filter((r) => r.email)
+    .map((r) => sendEmail({ to: r.email, subject, text: message, html: `<p>${message}</p>` }))
+  await Promise.all(tasks)
 }
 
 function randomToken(length = 32) {
@@ -2194,13 +2332,19 @@ app.post('/api/auth/register', async (req, res) => {
     logActivity(user.id, 'auth.register', { role })
     const verification = createOrRefreshVerification(user.id, email)
     logRegistrationEvent('register.created', { userId: user.id, role: accessRole })
+    try {
+      await sendVerificationEmail(email, verification.emailToken, verification.emailExpiresAt)
+      await sendVerificationOtp(email, verification.otp, verification.otpExpiresAt)
+    } catch (error) {
+      console.error('verification email send failed', error)
+      return res.status(500).json({ error: 'Failed to send verification. Check email configuration and try again.' })
+    }
     return res.status(201).json({
       ok: true,
       verification: {
         id: verification.id,
         email: maskEmail(email),
-        channels: ['email', 'otp'],
-        ...(VERIFICATION_MODE === 'mock' ? { emailToken: verification.emailToken, otp: verification.otp } : {})
+        channels: ['email', 'otp']
       }
     })
   }
@@ -2227,13 +2371,19 @@ app.post('/api/auth/register', async (req, res) => {
 
   const verification = createOrRefreshVerification(user.id, email)
   logRegistrationEvent('register.created', { userId: user.id, role: accessRole })
+  try {
+    await sendVerificationEmail(email, verification.emailToken, verification.emailExpiresAt)
+    await sendVerificationOtp(email, verification.otp, verification.otpExpiresAt)
+  } catch (error) {
+    console.error('verification email send failed', error)
+    return res.status(500).json({ error: 'Failed to send verification. Check email configuration and try again.' })
+  }
   res.status(201).json({
     ok: true,
     verification: {
       id: verification.id,
       email: maskEmail(email),
-      channels: ['email', 'otp'],
-      ...(VERIFICATION_MODE === 'mock' ? { emailToken: verification.emailToken, otp: verification.otp } : {})
+      channels: ['email', 'otp']
     }
   })
 })
@@ -2293,14 +2443,19 @@ app.post('/api/auth/resend-verification', (req, res) => {
   }
   const refreshed = createOrRefreshVerification(record.userId, record.email || '')
   logRegistrationEvent('verify.resend', { userId: record.userId, channel })
-  res.json({
+  const send = String(channel).toLowerCase() === 'otp'
+    ? sendVerificationOtp(refreshed.email, refreshed.otp, refreshed.otpExpiresAt)
+    : sendVerificationEmail(refreshed.email, refreshed.emailToken, refreshed.emailExpiresAt)
+  send.then(() => res.json({
     ok: true,
     verification: {
       id: refreshed.id,
       email: maskEmail(refreshed.email),
-      channels: ['email', 'otp'],
-      ...(VERIFICATION_MODE === 'mock' ? { emailToken: refreshed.emailToken, otp: refreshed.otp } : {})
+      channels: ['email', 'otp']
     }
+  })).catch((error) => {
+    console.error('verification resend failed', error)
+    res.status(500).json({ error: 'Failed to send verification. Check email configuration and try again.' })
   })
 })
 
@@ -3595,6 +3750,9 @@ app.post('/api/communications/notifications', auth, requireRole(['lecturer', 'ad
     return res.status(400).json({ error: 'channel must be email|sms' })
   }
   if (!message) return res.status(400).json({ error: 'message is required' })
+  if (channel === 'sms') {
+    return res.status(501).json({ error: 'SMS delivery not configured. Use email or configure an SMS provider.' })
+  }
 
   if (STORAGE_ENGINE === 'prisma') {
     const channelDb = String(channel).toLowerCase() === 'sms' ? 'SMS' : 'EMAIL'
@@ -3608,9 +3766,20 @@ app.post('/api/communications/notifications', auth, requireRole(['lecturer', 'ad
         status: 'queued',
         sentById: req.user.id
       }
-    }).then((row) => {
-      logActivity(req.user.id, 'communication.notification.send', { notificationId: row.id, channel, audience })
-      return res.status(201).json(row)
+    }).then(async (row) => {
+      try {
+        if (channelDb === 'EMAIL') {
+          await sendNotificationEmail({ audience, toUserId: targetId, message })
+          await prisma.notification.update({ where: { id: row.id }, data: { status: 'sent' } })
+          row.status = 'sent'
+        }
+        logActivity(req.user.id, 'communication.notification.send', { notificationId: row.id, channel, audience })
+        return res.status(201).json(row)
+      } catch (error) {
+        console.error('notification send failed', error)
+        await prisma.notification.update({ where: { id: row.id }, data: { status: 'failed' } })
+        return res.status(500).json({ error: 'Failed to send notification email.' })
+      }
     })
     if (audience !== 'all') {
       prisma.user.findUnique({ where: { id: targetId } }).then((user) => {
@@ -3645,6 +3814,22 @@ app.post('/api/communications/notifications', auth, requireRole(['lecturer', 'ad
   }
   store.notifications.push(row)
   saveStore()
+  if (channel === 'email') {
+    sendNotificationEmail({ audience, toUserId: row.toUserId, message })
+      .then(() => {
+        row.status = 'sent'
+        saveStore()
+        logActivity(req.user.id, 'communication.notification.send', { notificationId: row.id, channel, audience })
+        return res.status(201).json(row)
+      })
+      .catch((error) => {
+        console.error('notification send failed', error)
+        row.status = 'failed'
+        saveStore()
+        return res.status(500).json({ error: 'Failed to send notification email.' })
+      })
+    return
+  }
   logActivity(req.user.id, 'communication.notification.send', { notificationId: row.id, channel, audience })
   return res.status(201).json(row)
 })
@@ -3823,10 +4008,13 @@ app.post('/api/admin/staff', auth, requireRole(['admin']), async (req, res) => {
     })
     saveStore()
     logActivity(req.user.id, 'admin.staff.create', { staffId: row.id, role: accessRole })
-    return res.status(201).json({
-      ...userPublicView(row),
-      credentials: { username: generatedUsername, temporaryPassword: plainPassword, mustChangePassword }
-    })
+    try {
+      await sendTemporaryPasswordEmail(email, generatedUsername, plainPassword)
+    } catch (error) {
+      console.error('staff credentials email failed', error)
+      return res.status(500).json({ error: 'Failed to send credentials email. Check email configuration and try again.' })
+    }
+    return res.status(201).json(userPublicView(row))
   }
   if (store.users.find((u) => u.email === email)) return res.status(409).json({ error: 'Email already used' })
 
@@ -3848,10 +4036,13 @@ app.post('/api/admin/staff', auth, requireRole(['admin']), async (req, res) => {
   })
   saveStore()
   logActivity(req.user.id, 'admin.staff.create', { staffId: row.id, role: accessRole })
-  res.status(201).json({
-    ...userPublicView(row),
-    credentials: { username: generatedUsername, temporaryPassword: plainPassword, mustChangePassword }
-  })
+  try {
+    await sendTemporaryPasswordEmail(email, generatedUsername, plainPassword)
+  } catch (error) {
+    console.error('staff credentials email failed', error)
+    return res.status(500).json({ error: 'Failed to send credentials email. Check email configuration and try again.' })
+  }
+  res.status(201).json(userPublicView(row))
 })
 
 app.get('/api/admin/users', auth, requireRole(['admin']), (_req, res) => {
@@ -3933,10 +4124,13 @@ app.post('/api/admin/users', auth, requireRole(['admin']), async (req, res) => {
     })
     saveStore()
     logActivity(req.user.id, 'admin.user.create', { userId: row.id, role: accessRole })
-    return res.status(201).json({
-      ...userPublicView(row),
-      credentials: { username: generatedUsername, temporaryPassword: plainPassword, mustChangePassword }
-    })
+    try {
+      await sendTemporaryPasswordEmail(email, generatedUsername, plainPassword)
+    } catch (error) {
+      console.error('user credentials email failed', error)
+      return res.status(500).json({ error: 'Failed to send credentials email. Check email configuration and try again.' })
+    }
+    return res.status(201).json(userPublicView(row))
   }
   if (store.users.find((u) => u.email === email)) return res.status(409).json({ error: 'Email already used' })
 
@@ -3970,10 +4164,13 @@ app.post('/api/admin/users', auth, requireRole(['admin']), async (req, res) => {
   })
   saveStore()
   logActivity(req.user.id, 'admin.user.create', { userId: row.id, role: accessRole })
-  res.status(201).json({
-    ...userPublicView(row),
-    credentials: { username: generatedUsername, temporaryPassword: plainPassword, mustChangePassword }
-  })
+  try {
+    await sendTemporaryPasswordEmail(email, generatedUsername, plainPassword)
+  } catch (error) {
+    console.error('user credentials email failed', error)
+    return res.status(500).json({ error: 'Failed to send credentials email. Check email configuration and try again.' })
+  }
+  res.status(201).json(userPublicView(row))
 })
 
 app.patch('/api/admin/users/:id', auth, requireRole(['admin']), async (req, res) => {
@@ -4100,7 +4297,13 @@ app.post('/api/admin/users/:id/reset-password', auth, requireRole(['admin']), as
     })
     saveStore()
     logActivity(req.user.id, 'admin.user.reset-password', { userId: id })
-    return res.json({ ok: true, userId: id, temporaryPassword: tempPassword, mustChangePassword: true })
+    try {
+      await sendTemporaryPasswordEmail(user.email, accountProfileForUser(id)?.username || user.email, tempPassword)
+    } catch (error) {
+      console.error('reset password email failed', error)
+      return res.status(500).json({ error: 'Failed to send reset email. Check email configuration and try again.' })
+    }
+    return res.json({ ok: true, userId: id, mustChangePassword: true })
   }
   const user = store.users.find((u) => u.id === id)
   if (!user) return res.status(404).json({ error: 'User not found' })
@@ -4118,7 +4321,13 @@ app.post('/api/admin/users/:id/reset-password', auth, requireRole(['admin']), as
   })
   saveStore()
   logActivity(req.user.id, 'admin.user.reset-password', { userId: id })
-  res.json({ ok: true, userId: id, temporaryPassword: tempPassword, mustChangePassword: true })
+  try {
+    await sendTemporaryPasswordEmail(user.email, accountProfileForUser(id)?.username || user.email, tempPassword)
+  } catch (error) {
+    console.error('reset password email failed', error)
+    return res.status(500).json({ error: 'Failed to send reset email. Check email configuration and try again.' })
+  }
+  res.json({ ok: true, userId: id, mustChangePassword: true })
 })
 
 app.post('/api/admissions', (req, res) => {
@@ -4289,6 +4498,11 @@ app.patch('/api/admin/admissions/:id', auth, requireRole(['admin']), async (req,
         sentBy: req.user.id,
         createdAt: nowIso()
       })
+      try {
+        await sendTemporaryPasswordEmail(row.email, generatedUsername, generatedPassword)
+      } catch (error) {
+        console.error('admission credentials email failed', error)
+      }
     }
 
     const profile = ensureStudentProfileForUser(studentUser)
@@ -5277,8 +5491,15 @@ app.post('/api/auth/forgot-password', (req, res) => {
     if (STORAGE_ENGINE === 'prisma') {
       prisma.passwordReset.create({ data: { userId: u.id, token, expiresAt, used: false } })
         .then(() => {
-          logActivity(u.id, 'auth.password.reset.request', {})
-          res.json({ ok: true, token, expiresAt })
+          sendPasswordResetEmail(u.email, token, expiresAt)
+            .then(() => {
+              logActivity(u.id, 'auth.password.reset.request', {})
+              res.json({ ok: true })
+            })
+            .catch((error) => {
+              console.error('password reset email failed', error)
+              res.status(500).json({ error: 'Failed to send reset email. Check email configuration and try again.' })
+            })
         }).catch((error) => {
           console.error(error)
           res.status(500).json({ error: 'Failed to create reset token' })
@@ -5287,8 +5508,15 @@ app.post('/api/auth/forgot-password', (req, res) => {
     }
     store.passwordResets.push({ id: nextId('passwordResets'), userId: u.id, token, expiresAt: expiresAt.toISOString(), used: false })
     saveStore()
-    logActivity(u.id, 'auth.password.reset.request', {})
-    res.json({ ok: true, token, expiresAt })
+    sendPasswordResetEmail(u.email, token, expiresAt)
+      .then(() => {
+        logActivity(u.id, 'auth.password.reset.request', {})
+        res.json({ ok: true })
+      })
+      .catch((error) => {
+        console.error('password reset email failed', error)
+        res.status(500).json({ error: 'Failed to send reset email. Check email configuration and try again.' })
+      })
   }).catch((error) => {
     console.error(error)
     res.status(500).json({ error: 'Failed to process request' })

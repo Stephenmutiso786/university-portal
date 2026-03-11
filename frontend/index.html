@@ -995,7 +995,7 @@
     const runningFromFile = window.location.protocol === 'file:'
     const baseUrl = runningFromFile ? 'http://localhost:4000' : ''
     const state = { token: null, user: null, section: 'home', institution: null, rbacRoles: null, rbacPermissions: null }
-    const registrationState = { verificationId: null, email: '', emailToken: '', otp: '' }
+    const registrationState = { verificationId: null, email: '' }
     const maintenanceState = { enabled: false, message: '', endsAt: '' }
     let countdownTimer = null
 
@@ -1988,10 +1988,6 @@
       hideModuleForm()
       await renderModule(section)
       if (section === 'users') await loadUsers()
-      if (response?.credentials) {
-        showToast(`Account created. Username: ${response.credentials.username} | Temporary Password: ${response.credentials.temporaryPassword}`)
-        return
-      }
       showToast(`${moduleState.title} ${mode === 'edit' ? 'updated' : 'created'} successfully.`)
     }
 
@@ -2093,7 +2089,7 @@
       }
       if (action === 'reset' && role === 'admin' && moduleState.section === 'users') {
         const out = await api(`/api/admin/users/${row.id}/reset-password`, { method: 'POST', body: JSON.stringify({}) })
-        showToast(`Password reset. Temp password: ${out.temporaryPassword}`)
+        showToast('Password reset. Temporary password sent to user email.')
         return
       }
       if (role === 'admin' && moduleState.section === 'users' && action === 'delete' && row.id !== state.user.id) {
@@ -2712,7 +2708,11 @@
       if (!email) return
       try {
         const resp = await api('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) })
-        showToast(`Reset token: ${resp.token}. Use it to reset password within 1 hour.`)
+        if (resp?.ok) {
+          showToast('Password reset instructions sent to your email.')
+        } else {
+          showToast('If the email exists, reset instructions have been sent.')
+        }
       } catch (err) {
         showToast(err.message)
       }
@@ -2787,8 +2787,6 @@
       el('verifyOtp').value = ''
       registrationState.verificationId = null
       registrationState.email = ''
-      registrationState.emailToken = ''
-      registrationState.otp = ''
     }
 
     function validatePasswordStrength(password) {
@@ -2879,20 +2877,14 @@
     function showVerificationStep(verification) {
       registrationState.verificationId = verification.id
       registrationState.email = verification.email || ''
-      registrationState.emailToken = verification.emailToken || ''
-      registrationState.otp = verification.otp || ''
       el('registerStep1').classList.add('hidden')
       el('registerStep2').classList.add('hidden')
       el('registerStep3').classList.remove('hidden')
       el('registerStep4').classList.add('hidden')
       el('verifyEmailDisplay').textContent = verification.email || 'your email'
-      el('verifyEmailToken').value = verification.emailToken || ''
-      el('verifyOtp').value = verification.otp || ''
-      if (verification.emailToken || verification.otp) {
-        el('verifyHint').textContent = `Demo codes: Email Token ${verification.emailToken || '-'} | OTP ${verification.otp || '-'}`
-      } else {
-        el('verifyHint').textContent = ''
-      }
+      el('verifyEmailToken').value = ''
+      el('verifyOtp').value = ''
+      el('verifyHint').textContent = 'Check your email for the verification token or OTP.'
       el('verifyError').textContent = ''
     }
 
@@ -3001,8 +2993,8 @@
         password: el('newUserPassword').value,
         role: el('newUserRole').value
       }
-      const out = await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) })
-      showToast(out)
+      await api('/api/admin/users', { method: 'POST', body: JSON.stringify(payload) })
+      showToast('User created. Credentials sent to the user email.')
       el('newUserName').value = ''
       el('newUserEmail').value = ''
       await loadUsers()

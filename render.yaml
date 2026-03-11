@@ -22,5 +22,3 @@ services:
         value: true
       - key: CORS_ORIGIN
         value: ALLOW_ALL
-      - key: VERIFICATION_MODE
-        value: mock
