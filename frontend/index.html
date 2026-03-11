@@ -172,6 +172,42 @@
       font-weight: 700;
       border-bottom: 1px solid var(--line);
     }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; position: relative; }
+    .topbar-btn {
+      border: 1px solid rgba(40,243,255,.45);
+      background: rgba(40,243,255,.08);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .topbar-menu { position: relative; }
+    .topbar-dropdown {
+      position: absolute;
+      right: 0;
+      top: 42px;
+      min-width: 220px;
+      background: rgba(12,16,27,.95);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+      z-index: 20;
+    }
+    .topbar-dropdown .dropdown-title { color: var(--neon-lime); font-weight: 800; margin-bottom: 8px; }
+    .topbar-dropdown .dropdown-list { display: grid; gap: 6px; }
+    .topbar-dropdown .dropdown-list button {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(7,9,16,.6);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    .topbar-dropdown .dropdown-list button:hover { color: var(--neon-cyan); border-color: rgba(40,243,255,.5); }
     .role-pill {
       background: rgba(40,243,255,.12);
       border: 1px solid rgba(40,243,255,.5);
@@ -533,8 +569,8 @@
           <div id="loginFormFields">
             <div class="login-title">SIGN IN | TECH HUB</div>
             <div class="login-sub">Welcome! Log in to access your dashboard.</div>
-            <div class="field"><input id="loginEmail" placeholder="Phone / Email / Username" value="stephemutiso19@gmail.com" /></div>
-            <div class="field password-field"><input id="loginPassword" type="password" placeholder="PASSWORD" value="2006@shawn_M" /><button id="togglePasswordBtn" class="hint-btn" type="button">Show</button></div>
+            <div class="field"><input id="loginEmail" placeholder="Phone / Email / Username" /></div>
+            <div class="field password-field"><input id="loginPassword" type="password" placeholder="PASSWORD" /><button id="togglePasswordBtn" class="hint-btn" type="button">Show</button></div>
             <div class="field remember"><label><input type="checkbox" id="loginRemember" /> Remember me</label></div>
             <div class="actions">
               <button id="helpBtn" class="hint-btn">Help / Support</button>
@@ -542,7 +578,7 @@
               <button id="forgotBtn" class="hint-btn">Forgot Password?</button>
               <button class="signin-btn" id="signinBtn">Sign In</button>
             </div>
-            <div class="seed-note">Seed users: admin / lecturer / student / staff</div>
+            <div class="seed-note hidden"></div>
             <div class="error" id="loginError"></div>
           </div>
 
@@ -636,7 +672,16 @@
     <main class="main">
       <header class="topbar">
         <div id="portalTitle">Dashboard</div>
-        <div class="role-pill" id="rolePill">ROLE</div>
+        <div class="topbar-actions">
+          <div class="topbar-menu">
+            <button id="modulesToggleBtn" class="topbar-btn">Modules ▾</button>
+            <div id="modulesDropdown" class="topbar-dropdown hidden">
+              <div class="dropdown-title">Navigate</div>
+              <div id="topNavModules" class="dropdown-list"></div>
+            </div>
+          </div>
+          <div class="role-pill" id="rolePill">ROLE</div>
+        </div>
       </header>
 
       <div class="content">
@@ -646,8 +691,10 @@
           <div id="countdownMessage">Please pay required amount before deadline</div>
         </div>
 
-        <div class="section-title" id="sectionTitle">Modules</div>
-        <div id="tiles" class="tiles"></div>
+        <div id="tilesPanel" class="hidden">
+          <div class="section-title" id="sectionTitle">Modules</div>
+          <div id="tiles" class="tiles"></div>
+        </div>
 
         <section id="moduleWorkspace" class="module-workspace hidden">
           <div class="module-head" id="moduleHead">Module</div>
@@ -2550,6 +2597,27 @@
           renderModule(id).catch((err) => showToast(err.message))
         })
       })
+      renderTopNavModules()
+    }
+
+    function renderTopNavModules() {
+      const role = normalizeRole(state.user.role)
+      const menu = MENU_BY_ROLE[role] || MENU_BY_ROLE.student
+      const list = menu.filter((m) => m.id !== 'logout')
+      const container = document.getElementById('topNavModules')
+      if (!container) return
+      container.innerHTML = list.map((m) => `<button data-menu="${m.id}">${m.label}</button>`).join('')
+      container.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.menu
+          state.section = id
+          renderMenu()
+          renderTiles()
+          renderModule(id).catch((err) => showToast(err.message))
+          const dropdown = document.getElementById('modulesDropdown')
+          if (dropdown) dropdown.classList.add('hidden')
+        })
+      })
     }
 
     function renderTiles() {
@@ -3048,6 +3116,18 @@
     el('regGoLoginBtn').addEventListener('click', showLoginView)
     el('regAgainBtn2').addEventListener('click', showRegistrationEntry)
     el('helpBtn').addEventListener('click', openHelp)
+    const modulesToggleBtn = document.getElementById('modulesToggleBtn')
+    const modulesDropdown = document.getElementById('modulesDropdown')
+    if (modulesToggleBtn && modulesDropdown) {
+      modulesToggleBtn.addEventListener('click', (event) => {
+        event.stopPropagation()
+        modulesDropdown.classList.toggle('hidden')
+      })
+      document.addEventListener('click', () => {
+        modulesDropdown.classList.add('hidden')
+      })
+      modulesDropdown.addEventListener('click', (event) => event.stopPropagation())
+    }
     el('createUserBtn').addEventListener('click', async () => {
       try { await createUser() } catch (err) { showToast(err.message) }
     })
