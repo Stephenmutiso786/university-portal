@@ -1,6 +1,7 @@
 # Tech Hub University Portal (Hosting Ready)
 
 Modern full-stack university portal with role-based access and complete module coverage for academics, finance, administration, communication, LMS, analytics, security, and student life workflows.
+University Hub Centre.
 
 ## What Is Production-Ready Here
 - Frontend is served by backend (single deployable app)
